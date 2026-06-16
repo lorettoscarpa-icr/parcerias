@@ -1,0 +1,995 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Central de Parcerias · Loretto Scarpa</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,500;1,600&family=Barlow:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+<style>
+  :root{
+    --topbar:#1f280f;--sidebar:#27311a;--content:#3b4a22;--verde:#4a5c2a;--verde-fundo:#3b4a22;--verde-escuro:#2c3719;--verde-noite:#1f2711;--verde-claro:#5c7035;
+    --gold:#c9a950;--gold-claro:#e6d18a;--amber:#d08a45;--creme:#f1ede1;--creme-suave:#bdb9a6;--linha:rgba(201,169,80,.22);--linha-fraca:rgba(241,237,225,.1);
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  html,body{height:100%}
+  body{font-family:'Barlow',sans-serif;color:var(--creme);min-height:100vh;-webkit-font-smoothing:antialiased;background:var(--content)}
+  .avatar{display:flex;align-items:center;justify-content:center;border-radius:50%;border:1.5px solid var(--gold);overflow:hidden;background:radial-gradient(circle at 50% 35%,var(--verde-claro),var(--verde-escuro));color:var(--gold);font-family:'Playfair Display',serif;font-weight:600;flex:none}
+
+  /* ===== LOGIN ===== */
+  #loginView{display:none;min-height:100vh;align-items:center;justify-content:center;padding:24px;background:radial-gradient(100% 80% at 50% 0%,var(--verde-claro) 0%,var(--verde) 36%,var(--verde-fundo) 70%,var(--verde-escuro) 100%)}
+  #loginView.on{display:flex}
+  .frame-card{width:100%;max-width:430px;border:1px solid var(--linha);padding:clamp(32px,6vw,48px) clamp(26px,5vw,42px) clamp(24px,4vw,34px);text-align:center}
+  .emblem{width:64px;height:64px;border-radius:50%;border:2px solid var(--gold);background:radial-gradient(circle at 50% 35%,var(--verde-claro),var(--verde-escuro));display:flex;align-items:center;justify-content:center;flex:none;margin:0 auto;box-shadow:inset 0 0 0 5px rgba(31,39,17,.5)}
+  .emblem span{font-family:'Playfair Display',serif;font-weight:700;font-style:italic;font-size:26px;color:var(--gold)}
+  .eyebrow{font-family:'DM Mono',monospace;font-size:11px;letter-spacing:.3em;text-transform:uppercase;color:var(--gold);margin-top:22px}
+  .title{font-family:'Playfair Display',serif;font-weight:600;font-size:clamp(28px,7vw,38px);line-height:1.06;margin:12px 0 12px}.title em{font-style:italic;color:var(--gold)}
+  .subtitle{color:var(--creme-suave);font-weight:300;font-size:15px;max-width:300px;margin:0 auto clamp(22px,5vw,30px)}
+  .field{margin-bottom:13px;text-align:left}
+  .field input,.field select,.field textarea{width:100%;background:rgba(0,0,0,.16);border:1px solid var(--linha-fraca);color:var(--creme);font-family:'DM Mono',monospace;font-size:15px;padding:15px 16px;border-radius:3px;transition:border-color .25s,box-shadow .25s}
+  .field textarea{resize:vertical;line-height:1.4;font-size:14px}
+  .field input:focus,.field select:focus,.field textarea:focus{outline:none;border-color:var(--gold);box-shadow:0 0 0 3px rgba(201,169,80,.12)}
+  .erro{min-height:18px;font-size:12.5px;color:#e89a9a;margin:2px 0 6px;text-align:left}
+  .btn{width:100%;cursor:pointer;background:var(--gold);color:var(--verde-escuro);font-family:'Barlow';font-weight:600;font-size:15px;letter-spacing:.16em;text-transform:uppercase;border:none;padding:15px;border-radius:3px;transition:background .25s,transform .12s}
+  .btn:hover{background:var(--gold-claro)}.btn:active{transform:translateY(1px)}.btn:disabled{opacity:.6}
+  .foot{margin-top:22px;font-family:'DM Mono',monospace;font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--creme-suave);opacity:.7}
+  .avisoFB{display:none;margin-top:14px;font-family:'DM Mono',monospace;font-size:10px;line-height:1.5;color:var(--amber)}
+
+  /* ===== APP ===== */
+  #appView{display:none}#appView.on{display:block}
+  .topbar{position:sticky;top:0;z-index:50;height:60px;background:var(--topbar);border-bottom:1px solid var(--linha);display:flex;align-items:center;gap:11px;padding:0 16px}
+  .tb-emblem{width:34px;height:34px;border-radius:50%;border:1.5px solid var(--gold);display:flex;align-items:center;justify-content:center;flex:none;background:radial-gradient(circle at 50% 35%,var(--verde-claro),var(--verde-escuro))}
+  .tb-emblem b{font-family:'Playfair Display',serif;font-style:italic;color:var(--gold);font-size:15px}
+  .tb-titles .l{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:.22em;text-transform:uppercase;color:var(--creme-suave)}
+  .tb-titles .t{font-family:'Playfair Display',serif;font-size:16px;line-height:1.1;margin-top:1px}.tb-titles .t b{color:var(--gold);font-weight:600}
+  .tb-right{margin-left:auto;display:flex;align-items:center;gap:9px}
+  .tb-user{display:flex;align-items:center;gap:9px;padding:4px 12px 4px 5px;border:1px solid var(--linha-fraca);border-radius:30px}
+  .tb-user .avatar{width:30px;height:30px;font-size:13px}
+  .tb-user .nm{font-size:13px;font-weight:500}.tb-user .cr{color:var(--gold);font-family:'DM Mono';font-size:9.5px;letter-spacing:.1em;text-transform:uppercase}
+  .sair{background:none;border:1px solid var(--linha-fraca);color:var(--creme-suave);font-family:'DM Mono';font-size:10px;letter-spacing:.12em;text-transform:uppercase;padding:8px 11px;border-radius:20px;cursor:pointer;transition:.2s}
+  .sair:hover{border-color:var(--gold);color:var(--gold)}
+  @media(max-width:640px){.tb-titles .t{font-size:14px}.tb-user .nm,.tb-user .cr{display:none}}
+
+  .wrap{max-width:1080px;margin:0 auto;padding:22px 16px 80px}
+
+  /* KPIs */
+  .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:22px}
+  .kpi{background:var(--sidebar);border:1px solid var(--linha);border-radius:12px;padding:16px 18px}
+  .kpi .kl{font-family:'DM Mono';font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--creme-suave)}
+  .kpi .kv{font-family:'Playfair Display',serif;font-size:30px;color:var(--gold);line-height:1.1;margin-top:4px}
+  .kpi .ks{font-size:12px;color:var(--creme-suave);font-weight:300}
+
+  /* Toolbar */
+  .toolbar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:18px}
+  .seg{display:flex;gap:6px;flex-wrap:wrap}
+  .chip{background:var(--sidebar);border:1px solid var(--linha-fraca);color:var(--creme-suave);font-family:'Barlow';font-weight:500;font-size:13px;padding:8px 14px;border-radius:20px;cursor:pointer;transition:.18s}
+  .chip:hover{border-color:var(--gold)}
+  .chip.active{background:rgba(201,169,80,.16);border-color:var(--gold);color:var(--creme)}
+  .search{flex:1;min-width:180px}
+  .search input{width:100%;background:var(--sidebar);border:1px solid var(--linha-fraca);color:var(--creme);font-family:'DM Mono';font-size:13px;padding:11px 14px;border-radius:8px}
+  .search input:focus{outline:none;border-color:var(--gold)}
+  .addbtn{background:var(--gold);color:var(--verde-escuro);font-family:'Barlow';font-weight:600;font-size:13.5px;letter-spacing:.04em;border:none;padding:11px 18px;border-radius:8px;cursor:pointer;display:flex;align-items:center;gap:7px;transition:background .2s}
+  .addbtn:hover{background:var(--gold-claro)}
+  .addbtn svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2}
+
+  /* Cards */
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:14px}
+  .card{background:var(--sidebar);border:1px solid var(--linha);border-radius:14px;padding:18px;display:flex;flex-direction:column;gap:14px;position:relative;overflow:hidden}
+  .card.premio{border-color:var(--gold)}
+  .card.premio::after{content:"PRÊMIO EXTRA";position:absolute;top:13px;right:-34px;transform:rotate(45deg);background:var(--gold);color:var(--verde-escuro);font-family:'DM Mono';font-size:9px;letter-spacing:.12em;padding:3px 40px;font-weight:500}
+  .card-head{display:flex;gap:12px;align-items:flex-start}
+  .card-head .avatar{width:44px;height:44px;font-size:18px}
+  .card-id{flex:1;min-width:0}
+  .card-id .nome{font-family:'Playfair Display',serif;font-size:18px;font-weight:600;line-height:1.15}
+  .card-id .resp{font-size:12.5px;color:var(--creme-suave);font-weight:300;margin-top:2px}
+  .vend-tags{display:flex;flex-direction:column;gap:4px;align-items:flex-end}
+  .vend-tag{font-family:'DM Mono';font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:var(--gold);border:1px solid var(--linha-fraca);padding:2px 8px;border-radius:4px;white-space:nowrap}
+  .vend-tag.share{color:var(--amber);border-color:rgba(208,138,69,.4);background:rgba(208,138,69,.1)}
+  .hint{font-size:11.5px;color:var(--creme-suave);font-weight:300;margin-top:7px;line-height:1.4}
+
+  .progress-box{background:rgba(0,0,0,.16);border-radius:10px;padding:14px}
+  .pbar{height:9px;border-radius:6px;background:rgba(241,237,225,.12);overflow:hidden;margin:9px 0 8px}
+  .pbar i{display:block;height:100%;background:linear-gradient(90deg,var(--gold),var(--gold-claro));border-radius:6px;transition:width .5s}
+  .pmeta{display:flex;justify-content:space-between;font-size:12px}
+  .pmeta .falta{color:var(--gold);font-weight:600}
+  .pmeta .muted{color:var(--creme-suave)}
+  .gain{font-family:'Playfair Display',serif;font-size:14px;color:var(--gold-claro);font-style:italic}
+
+  .stats-row{display:flex;gap:18px}
+  .stat{flex:1}
+  .stat .sl{font-family:'DM Mono';font-size:9px;letter-spacing:.12em;text-transform:uppercase;color:var(--creme-suave)}
+  .stat .sv{font-family:'Playfair Display',serif;font-size:22px;color:var(--creme);line-height:1.2}
+  .stat .sv.brinde{color:var(--gold)}
+
+  .lastsale{font-size:12px;color:var(--creme-suave);font-weight:300}
+
+  /* escada de brindes */
+  .brindes-box{background:rgba(0,0,0,.16);border-radius:10px;padding:6px 12px}
+  .brinde-linha{display:flex;align-items:center;gap:10px;padding:9px 0}
+  .brinde-linha+.brinde-linha{border-top:1px solid var(--linha-fraca)}
+  .bl-info{flex:1;min-width:0}
+  .bl-tit{font-size:13.5px;font-weight:500}
+  .bl-tit .bl-rule{font-family:'DM Mono';font-size:9.5px;letter-spacing:.06em;color:var(--creme-suave);text-transform:uppercase}
+  .bl-sub{font-size:12px;color:var(--creme-suave);font-weight:300;margin-top:2px}
+  .bl-sub .pend{color:var(--amber);font-weight:600}
+  .stepper{display:flex;align-items:center;gap:8px;flex:none}
+  .st-btn{width:30px;height:30px;border-radius:8px;border:1px solid var(--linha-fraca);background:rgba(201,169,80,.1);color:var(--gold);font-size:18px;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:.15s}
+  .st-btn:hover:not(:disabled){background:rgba(201,169,80,.22);border-color:var(--gold)}
+  .st-btn:disabled{opacity:.3;cursor:default}
+  .st-val{font-family:'Playfair Display',serif;font-size:18px;color:var(--creme);min-width:18px;text-align:center}
+  .entregar-btn{flex:none;background:rgba(201,169,80,.14);border:1px solid var(--linha);color:var(--gold);font-family:'Barlow';font-weight:600;font-size:12.5px;padding:8px 12px;border-radius:8px;cursor:pointer;white-space:nowrap;transition:.15s}
+  .entregar-btn:hover{background:rgba(201,169,80,.26);border-color:var(--gold)}
+  .badge-inativo{display:inline-flex;align-items:center;gap:5px;font-family:'DM Mono';font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:var(--amber);background:rgba(208,138,69,.14);border:1px solid rgba(208,138,69,.3);padding:3px 9px;border-radius:14px}
+  .banner-incompleto{display:block;width:100%;text-align:left;font-family:'DM Mono';font-size:11px;letter-spacing:.03em;color:var(--amber);background:rgba(208,138,69,.12);border:1px dashed rgba(208,138,69,.5);padding:9px 12px;border-radius:9px;cursor:pointer;transition:.15s}
+  .banner-incompleto:hover{background:rgba(208,138,69,.22);border-color:var(--amber)}
+  .fav-btn{background:none;border:none;font-size:20px;line-height:1;color:var(--creme-suave);cursor:pointer;padding:0;transition:.15s}
+  .fav-btn:hover{transform:scale(1.15)}
+  .fav-btn.on{color:var(--gold)}
+  .card.fav{border-color:var(--gold);box-shadow:0 0 0 1px rgba(201,169,80,.35)}
+
+  .card-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:auto}
+  .act{flex:1;min-width:120px;background:rgba(0,0,0,.16);border:1px solid var(--linha-fraca);color:var(--creme);font-family:'Barlow';font-weight:500;font-size:12.5px;padding:10px;border-radius:8px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;transition:.18s}
+  .act:hover{border-color:var(--gold)}
+  .act svg{width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:1.8}
+  .act.wa{color:#9fd6a3}.act.wa:hover{border-color:#5fae64}
+  .act.venda{background:rgba(201,169,80,.14);border-color:var(--linha)}
+  .act.venda:hover{background:rgba(201,169,80,.22)}
+
+  .empty{text-align:center;padding:60px 20px;color:var(--creme-suave)}
+  .empty h3{font-family:'Playfair Display',serif;font-size:24px;color:var(--creme);margin-bottom:8px}
+  .empty p{font-weight:300;max-width:340px;margin:0 auto}
+
+  /* Modal */
+  .scrim{display:none;position:fixed;inset:0;background:rgba(15,19,8,.72);z-index:100;align-items:flex-start;justify-content:center;padding:24px;overflow-y:auto}
+  .scrim.on{display:flex}
+  .modal{background:var(--verde-fundo);border:1px solid var(--linha);border-radius:16px;width:100%;max-width:440px;margin:auto;padding:26px 24px}
+  .modal h2{font-family:'Playfair Display',serif;font-size:24px;font-weight:600;margin-bottom:4px}.modal h2 em{font-style:italic;color:var(--gold)}
+  .modal .sub{color:var(--creme-suave);font-size:13px;font-weight:300;margin-bottom:20px}
+  .lbl{font-family:'DM Mono';font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--creme-suave);display:block;margin:0 0 6px}
+  .modal .field{margin-bottom:15px}
+  .modal-actions{display:flex;gap:10px;margin-top:8px}
+  .modal-actions .btn{flex:1}
+  .btn.ghost{background:none;border:1px solid var(--linha-fraca);color:var(--creme-suave)}
+  .btn.ghost:hover{border-color:var(--gold);background:none;color:var(--gold)}
+  .vendas-list{margin-bottom:8px;border:1px solid var(--linha-fraca);border-radius:8px;overflow:hidden}
+  .vendas-list.expandido{max-height:230px;overflow-y:auto}
+  .ver-todas{width:100%;background:none;border:1px dashed var(--linha-fraca);color:var(--creme-suave);font-family:'DM Mono';font-size:11px;letter-spacing:.08em;text-transform:uppercase;padding:9px;border-radius:8px;cursor:pointer;margin-bottom:14px;transition:.15s}
+  .ver-todas:hover{border-color:var(--gold);color:var(--gold)}
+  .vl-item{display:flex;align-items:center;gap:8px;padding:9px 11px;border-bottom:1px solid var(--linha-fraca);font-size:13px}
+  .vl-item:last-child{border-bottom:0}
+  .vl-item.editando{background:rgba(208,138,69,.12)}
+  .vl-info{flex:1;min-width:0}
+  .vl-item .vd{color:var(--creme-suave);font-family:'DM Mono';font-size:11px}
+  .vl-obs{display:block;color:var(--creme-suave);font-size:11px;font-style:italic;margin-top:2px;opacity:.85}
+  .vl-item .vp{color:var(--gold);font-weight:600;white-space:nowrap}
+  .vl-act{background:none;border:none;cursor:pointer;color:var(--creme-suave);padding:4px;border-radius:6px;display:flex;transition:.15s}
+  .vl-act svg{width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:1.8}
+  .vl-act:hover{color:var(--gold);background:rgba(201,169,80,.12)}
+  .vl-act.del:hover{color:#e89a9a;background:rgba(232,154,154,.12)}
+  .vl-empty{padding:14px;text-align:center;color:var(--creme-suave);font-size:12.5px;font-weight:300}
+
+  .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--topbar);border:1px solid var(--gold);color:var(--creme);font-size:13.5px;padding:13px 22px;border-radius:30px;z-index:200;opacity:0;transition:.3s;pointer-events:none}
+  .toast.on{opacity:1;transform:translateX(-50%) translateY(0)}
+  .loader{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:var(--content);z-index:300}
+  .loader.off{display:none}
+  .ring{width:42px;height:42px;border-radius:50%;border:3px solid rgba(201,169,80,.22);border-top-color:var(--gold);animation:spin .8s linear infinite}
+  @keyframes spin{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+
+<!-- LOADER -->
+<div class="loader" id="loader"><div class="ring"></div></div>
+
+<!-- LOGIN -->
+<div id="loginView" class="view">
+  <div class="frame-card">
+    <div class="emblem"><span>L</span></div>
+    <div class="eyebrow">Loretto Scarpa</div>
+    <div class="title">Central de <em>Parcerias</em></div>
+    <div class="subtitle" id="loginSub">Acesse com o e-mail da equipe para gerenciar suas parcerias.</div>
+    <div class="field" id="emailRow"><input id="email" type="email" placeholder="seu.email@gmail.com" autocomplete="username"></div>
+    <div class="field"><input id="senha" type="password" placeholder="Senha" autocomplete="current-password"></div>
+    <div class="erro" id="erro"></div>
+    <button class="btn" id="btnLogin">Entrar</button>
+    <div class="avisoFB" id="avisoFB">⚠ Falha ao conectar ao banco. Verifique a conexão.</div>
+    <div class="foot">Parcerias · 10 pares = 1 brinde</div>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="appView" class="view">
+  <div class="topbar">
+    <div class="tb-emblem"><b>L</b></div>
+    <div class="tb-titles"><div class="l">Loretto Scarpa</div><div class="t">Central de <b>Parcerias</b></div></div>
+    <div class="tb-right">
+      <div class="tb-user"><div class="avatar" id="uAv"></div><div><div class="nm" id="uNome"></div><div class="cr" id="uPapel"></div></div></div>
+      <button class="sair" id="btnLimpar" style="display:none">Limpar teste</button>
+      <button class="sair" id="btnSair">Sair</button>
+    </div>
+  </div>
+
+  <div class="wrap">
+    <div class="kpis" id="kpis"></div>
+
+    <div class="toolbar">
+      <div class="seg" id="segVend"></div>
+      <div class="search"><input id="busca" type="text" placeholder="Buscar parceiro, loja ou responsável…"></div>
+      <button class="addbtn" id="btnAddParceiro">
+        <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+        Novo parceiro
+      </button>
+    </div>
+
+    <div class="grid" id="grid"></div>
+  </div>
+</div>
+
+<!-- MODAL PARCEIRO -->
+<div class="scrim" id="scrimParceiro">
+  <div class="modal">
+    <h2>Novo <em>parceiro</em></h2>
+    <div class="sub">Cadastre a loja parceira e o contato de quem recebe os avisos.</div>
+    <input type="hidden" id="pEditId">
+    <div class="field"><label class="lbl">Nome da loja parceira *</label><input id="pNome" type="text" placeholder="Ex: Trajes & Cia"></div>
+    <div class="field"><label class="lbl">Responsável na loja</label><input id="pResp" type="text" placeholder="Ex: Carlos"></div>
+    <div class="field"><label class="lbl">WhatsApp (com DDD) *</label><input id="pTel" type="tel" placeholder="Ex: 62 99999-9999"></div>
+    <div class="field" id="pVendRow"><label class="lbl">Vendedora responsável (dona)</label><select id="pVend"></select></div>
+    <div class="field" id="pShareRow">
+      <label class="lbl">Compartilhar temporariamente (férias)</label>
+      <select id="pShare"></select>
+      <div id="pShareAteWrap" style="margin-top:8px;display:none">
+        <label class="lbl">Até (opcional — em branco = sem prazo)</label>
+        <input id="pShareAte" type="date">
+      </div>
+      <div class="hint">A vendedora escolhida passa a ver e atender este parceiro até a data. A dona continua com ele.</div>
+    </div>
+    <div id="pBrindesBox" style="display:none;border-top:1px solid var(--linha-fraca);padding-top:14px;margin-bottom:6px">
+      <label class="lbl">Corrigir brindes já entregues</label>
+      <div class="brinde-linha" style="padding:8px 0">
+        <div class="bl-info"><div class="bl-tit">👞 Sapatos grátis</div><div class="bl-sub" id="pSapMax"></div></div>
+        <div class="stepper"><button class="st-btn" type="button" id="pSapMinus">−</button><span class="st-val" id="pSapVal">0</span><button class="st-btn" type="button" id="pSapPlus">+</button></div>
+      </div>
+      <div class="brinde-linha" style="padding:8px 0;border-top:1px solid var(--linha-fraca)">
+        <div class="bl-info"><div class="bl-tit">🎁 ${''}Prêmios extras</div><div class="bl-sub" id="pPremMax"></div></div>
+        <div class="stepper"><button class="st-btn" type="button" id="pPremMinus">−</button><span class="st-val" id="pPremVal">0</span><button class="st-btn" type="button" id="pPremPlus">+</button></div>
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn ghost" data-close="scrimParceiro">Cancelar</button>
+      <button class="btn" id="btnSalvarParceiro">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL VENDA -->
+<div class="scrim" id="scrimVenda">
+  <div class="modal">
+    <h2>Registrar <em>venda</em></h2>
+    <div class="sub" id="vSub"></div>
+    <input type="hidden" id="vParceiroId">
+    <div class="field"><label class="lbl">Data da venda</label><input id="vData" type="date"></div>
+    <div class="field"><label class="lbl">Nome do cliente</label><input id="vCliente" type="text" placeholder="Ex: João Mendes"></div>
+    <div class="field"><label class="lbl">Qtd. de pares vendidos *</label><input id="vPares" type="number" min="1" value="1"></div>
+    <div class="field"><label class="lbl">Observações (opcional)</label><textarea id="vObs" rows="2" placeholder="Ex: tamanho 42, WhatsApp do cliente, modelo do sapato…"></textarea></div>
+    <div class="vendas-list" id="vHistorico"></div>
+    <button class="ver-todas" id="vVerTodas" type="button" style="display:none"></button>
+    <div id="vEditAviso" style="display:none;font-family:'DM Mono';font-size:11px;letter-spacing:.04em;color:var(--amber);margin:-6px 0 12px">✎ editando uma venda — altere os campos acima e toque em Atualizar.</div>
+    <div class="modal-actions">
+      <button class="btn ghost" data-close="scrimVenda">Fechar</button>
+      <button class="btn ghost" id="btnRelatorio" type="button">📄 Relatório</button>
+      <button class="btn ghost" id="btnEnviarWa" type="button">📲 Enviar</button>
+      <button class="btn" id="btnSalvarVenda">Adicionar venda</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ===== CONFIG ===== */
+const firebaseConfig={apiKey:"AIzaSyCogQoTSULCdC1JhTb0IUilWAIA1itBJ8U",authDomain:"loretto-scarpa-l-icr.firebaseapp.com",projectId:"loretto-scarpa-l-icr",storageBucket:"loretto-scarpa-l-icr.firebasestorage.app",messagingSenderId:"428188657366",appId:"1:428188657366:web:5ae4d4004038667283cb77"};
+const ACCOUNTS={
+  'jhenniferlorettoscarpa@gmail.com':{nome:'Jhennifer',papel:'vendedora',fem:true},
+  'ialeylorettoscarpa@gmail.com':{nome:'Ialey',papel:'vendedora',fem:true},
+  'michellylorettoscarpa@gmail.com':{nome:'Michelly',papel:'vendedora',fem:true},
+  'natalialorettoscarpa@gmail.com':{nome:'Natália',papel:'vendedora',fem:true},
+  'edsonlorettoscarpa@gmail.com':{nome:'Edson',papel:'operacao',fem:false},
+  'yurilorettoscarpa@gmail.com':{nome:'Yuri',papel:'operacao',fem:false},
+  'lorettoscarpa@gmail.com':{nome:'Gregory',papel:'gestor',fem:false}
+};
+const PAPEL_LABEL={vendedora:'Vendedora',operacao:'Operação',gestor:'Gestor'};
+const VENDEDORAS=['Jhennifer','Ialey','Michelly','Natália'];
+
+/* Regras do programa */
+const PARES_POR_BRINDE   = 10;  // a cada 10 pares vendidos = 1 sapato grátis
+const SAPATOS_POR_PREMIO = 5;   // a cada 5 sapatos grátis ganhos = 1 prêmio extra (copo / produto da loja)
+const PREMIO_LABEL = 'Prêmio extra';
+const DIAS_INATIVO     = 30;   // sem vendas há mais de 30 dias = alerta de reativação
+
+const DOC_PATH = ['ls_parcerias','loja'];     // documento único compartilhado
+const LS_KEY   = 'loretto-parcerias';
+
+/* MODO TESTE: sem login e sem Firebase — grava só no navegador (localStorage).
+   Quando o banco estiver pronto, troque para false para religar login + nuvem. */
+const TEST_LOCAL = false;
+
+/* ===== ESTADO ===== */
+let auth,db,FB_OK=false,conta=null;
+let PARCEIROS=[];
+let filtroVend='__todas';
+let editando=null;
+
+/* ===== INIT FIREBASE ===== */
+try{firebase.initializeApp(firebaseConfig);auth=firebase.auth();auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);db=firebase.firestore();FB_OK=true;}
+catch(e){console.warn(e);document.getElementById('avisoFB').style.display='block';}
+
+/* ===== HELPERS ===== */
+const $=id=>document.getElementById(id);
+const norm=e=>(e||'').trim().toLowerCase();
+const contaDe=e=>ACCOUNTS[norm(e)];
+const ini=n=>(n||'?').trim()[0]?.toUpperCase()||'?';
+function toast(m){const t=$('toast');t.textContent=m;t.classList.add('on');clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove('on'),2400);}
+function uid(){return 'p'+Date.now().toString(36)+Math.random().toString(36).slice(2,6);}
+function hojeISO(){const d=new Date();return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;}
+
+/* ===== CARGA INICIAL — PARCEIROS DAS 4 VENDEDORAS (transcrito das tabelas em papel) =====
+   Formato: {nome, resp, tel, vend, sapEnt, premEnt, v:[[data ISO, cliente, pares], ...]} */
+const SEED_GERAL=[
+  // ---------- IALEY ----------
+  {vend:'Ialey', nome:'Alfaiataria Lilian', resp:'Lilian', tel:'(62) 99424-2121', v:[['2025-01-08','Denis Souza Silva',1],['2025-01-08','SNK Mi Hu 42',1],['2025-12-05','2 sapatos',2],['2025-12-05','Lilian + Day',1]]},
+  {vend:'Ialey', nome:'Marlon Matheus', resp:'', tel:'(62) 98230-5779', v:[['2025-07-09','Marlon Matheus Cardoso Ribeiro',5]]},
+  {vend:'Ialey', nome:'Alboni Scarpa', resp:'', tel:'(62) 98400-3210', v:[['2025-02-11','Breno José da Silva Franco',2],['2025-02-11','Felipe Valadares',2]]},
+  {vend:'Ialey', nome:'Marcos Davi Macedo', resp:'Marcos Davi Macedo', tel:'(62) 98268-6068', v:[['2025-10-22','Marcos Davi Macedo',3],['2026-03-20','Marcos Davi Macedo',4]]},
+  {vend:'Ialey', nome:'Gilberto Dornelas', resp:'', tel:'(62) 98278-2030', v:[['2025-12-04','Gilberto Dornelas',4],['2025-11-24','Gilberto Dornelas',3],['2025-09-05','Gilberto Dornelas',3],['2025-12-15','Gilberto Dornelas',1],['2026-01-30','Gilberto Dornelas',1],['2025-12-30','Gilberto Dornelas da Silva',2]]},
+  {vend:'Ialey', nome:'Thiago Augusto', resp:'', tel:'(62) 98633-4381', v:[['2026-03-26','Cliente',1]]},
+  {vend:'Ialey', nome:'Adilson Silva', resp:'', tel:'(62) 98581-3509', v:[['2025-08-08','Adilson Silva',1],['2025-08-21','Adilson Silva',1],['2025-08-23','Adilson',1],['2025-03-05','DRB SS PL-41',1],['2025-09-10','LFR Adilson Silva',1],['2025-10-13','Adilson Silva SLP TK Pm-43',1],['2025-11-14','Adilson Silva LFR SS GL PL-40',1],['2025-12-01','Adilson',2],['2025-12-19','Adilson DRB SS 139g wh-40',1],['2025-12-26','Adilson Silva',4],['2025-12-26','Adilson Silva',1],['2025-12-27','Adilson Silva',1],['2026-01-15','Adilson (férias)',2]]},
+  {vend:'Ialey', nome:'Lucas Diógenes', resp:'', tel:'(62) 99184-4422', v:[['2026-04-02','Phelipe Henrique',2],['2026-04-02','Lázaro Cleberson',2]]},
+  {vend:'Ialey', nome:'Brasilvor Seguros', resp:'', tel:'(62) 99971-5732', v:[['2025-05-22','João Félci Franklin de Castro',3],['2025-05-26','Filho do João',1]]},
+  {vend:'Ialey', nome:'Jonathan Moreira Batista da Silva', resp:'', tel:'(62) 99298-4842', v:[['2026-02-24','Jonathan Moreira',2]]},
+  {vend:'Ialey', nome:'Luiz Fernando', resp:'', tel:'(62) 98289-2471', v:[['2025-11-22','Dr. Luiz Fernando',1],['2025-11-22','Alessandra',1],['2026-04-09','Luiz Fernando',1]]},
+  {vend:'Ialey', nome:'Felício Lizardo', resp:'', tel:'(62) 98508-0028', v:[['2025-02-05','Pastor Enoque',1],['2025-02-07','Enoque Vieira Silva',1],['2025-12-19','Fabricio Lizardo',1],['2025-12-19','Cristiano Ferreira Fernandes',1],['2025-12-19','Frankes Lizardo Machado',2],['2025-09-02','Felício Lizardo Machado',2],['2025-09-05','Felício Lizardo Machado',1],['2025-11-03','Felício Lizardo Machado',1],['2026-03-17','Felício Lizardo',3]]},
+  {vend:'Ialey', nome:'Thiago Oliveira', resp:'Thiago Oliveira', tel:'', v:[['2025-06-01','Eduardo Costa',1]]},
+  {vend:'Ialey', nome:'Engraxate Casa6', resp:'Cleusmar (Sorriso)', tel:'(64) 98111-5026', v:[]},
+  {vend:'Ialey', nome:'Parceiro (Jenner)', resp:'Jenner', tel:'(62) 98522-0802', v:[['2024-12-24','Kauann Silva Tomé',1],['2026-01-10','(Férias)',2],['2026-02-03','Klay Honfarney de Lima Nobre',1]]},
+  {vend:'Ialey', nome:'Premier Locações', resp:'', tel:'', v:[['2025-06-01','(continua em outra folha)',15]]},
+  {vend:'Ialey', nome:'Victor Spinola', resp:'Victor Spinola', tel:'(62) 99103-5295', v:[['2025-06-09','Guilherme Souza Pires Bastos',2],['2025-05-03','Victor Spinola (DRB)',1],['2025-09-02','SNK ch ct 39',1],['2025-09-02','SNK ch mar 39',1],['2026-03-02','Rafaella Almeida',2],['2026-04-22','Marcos Linaus Onório',1]]},
+  {vend:'Ialey', nome:'Barbearia Casa6', resp:'Marcos', tel:'(62) 99357-4708', v:[]},
+
+  // ---------- MICHELLY ----------
+  {vend:'Michelly', nome:'Alfaiataria Costura Perfeita', resp:'Regis', tel:'(62) 98423-2363', v:[['2025-07-02','Alessandra/Patrick',1],['2025-07-10','Regis',1],['2025-09-10','Alex',2],['2025-11-11','José Carlos',2],['2026-05-09','Regis',1]]},
+  {vend:'Michelly', nome:'Malaspina', resp:'Matheus', tel:'(62) 99883-0066', sapEnt:1, v:[['2025-07-21','Antunes Júnior',1],['2025-07-21','José Carlos',1],['2025-08-11','Arijoanã',2],['2025-08-14','Lucas Costa',1],['2025-08-14','Henriques',4],['2025-08-30','Adriano',1],['2025-08-30','Pietro',3],['2025-01-22','Wilson',2],['2026-02-23','Denizete',1],['2026-03-11','Gerson e Rodrigo',3]]},
+  {vend:'Michelly', nome:'Rodrigo', resp:'Rodrigo', tel:'(64) 99933-3535', sapEnt:2, v:[['2025-06-09','Rodrigo',1],['2025-06-11','Rodrigo',1],['2025-06-17','Rodrigo',1],['2025-07-02','Rodrigo',3],['2025-07-02','Roberto',1],['2025-07-21','Rodrigo',2],['2025-08-04','Rodrigo',1],['2025-08-07','Rodrigo',2],['2025-08-13','Rodrigo',2],['2025-08-20','Rodrigo',1],['2025-08-22','Rodrigo',2],['2025-08-28','Rodrigo',1],['2025-09-01','Rodrigo',1],['2025-09-11','Rodrigo',1],['2025-10-09','Rodrigo',1],['2026-02-23','Rodrigo',1],['2026-03-25','Rodrigo',1],['2026-04-17','Rodrigo',1],['2026-05-21','Rodrigo',2],['2026-05-21','Rodrigo',3]]},
+  {vend:'Michelly', nome:'Jackley Hofman', resp:'', tel:'', sapEnt:2, v:[['2025-05-17','Jackley - HK Azul',1],['2025-05-24','Danilo - LFR social',1],['2025-07-15','João Victor',1],['2025-09-20','José Vitor',1],['2025-09-30','Jackley',2],['2025-10-14','Jackley',2],['2025-10-16','Jackley',1],['2025-10-21','Jackley',2],['2025-10-25','Jackley',2],['2025-12-03','Jackley',1],['2025-12-04','Jackley - hooper 41',1],['2025-01-09','Jackley',5],['2025-01-16','Jackley KT 39',1],['2026-02-04','Jackley Dubai 42',1],['2026-05-20','Jackley',5],['2026-06-01','Jackley',3]]},
+  {vend:'Michelly', nome:"D'Spacciolle", resp:'José Luís', tel:'', sapEnt:1, v:[['2025-06-01','Henrique',1],['2025-06-01','Cliente',2],['2025-06-01','Cliente',4],['2025-12-20','Alex',2],['2026-01-12','Sonia',2],['2026-01-30','Nilo',3],['2026-02-06','Charles/Michele',1],['2026-04-10','Daniel',1],['2026-05-12','José Luís',1]]},
+  {vend:'Michelly', nome:"D's Marcos", resp:'Marcos', tel:'(62) 99286-6781', v:[['2025-01-01','Marcos',2],['2025-01-01','Ricarte',1],['2025-01-01','Mateus',1],['2025-01-01','Iron',1],['2025-01-01','Fernando',2],['2025-01-01','Leandro',5],['2025-01-27','Pedro Henrique',1]]},
+  {vend:'Michelly', nome:'Rodolfo', resp:'', tel:'', v:[['2026-02-05','Márcio',2],['2026-02-05','Pedro',1],['2026-02-05','Luis Fernando',1],['2026-05-04','Bruno Iago',3]]},
+  {vend:'Michelly', nome:'Reinaldo', resp:'Reinaldo', tel:'(62) 98364-3587', v:[['2025-05-17','Igor',1],['2025-06-13','João Batista',1]]},
+  {vend:'Michelly', nome:'Oziel Ramos', resp:'Oziel', tel:'(62) 99278-0845', v:[]},
+  {vend:'Michelly', nome:'Alfaiate', resp:'Ismael', tel:'(62) 98417-1833', v:[]},
+  {vend:'Michelly', nome:'AMI / Malaspina', resp:'Cleomar', tel:'(62) 98438-6330', v:[]},
+  {vend:'Michelly', nome:'Sapataria do Futuro', resp:'', tel:'(62) 99819-8686', v:[]},
+
+  // ---------- JHENNIFER (registra no WhatsApp; entram zerados) ----------
+  {vend:'Jhennifer', nome:'Boaz', resp:'Laucas/Hellen', tel:'(62) 99929-1743', v:[]},
+  {vend:'Jhennifer', nome:'Alternativa', resp:'Fernando', tel:'(62) 99182-3323', v:[]},
+  {vend:'Jhennifer', nome:'Guelee / Pazam', resp:'Ricardo', tel:'(62) 98547-0209', v:[]},
+  {vend:'Jhennifer', nome:'Consultoria de Imagem', resp:'Shusley', tel:'(62) 98323-4000', v:[]},
+  {vend:'Jhennifer', nome:'Koalbea', resp:'Gabriel', tel:'(62) 98574-1551', v:[]},
+  {vend:'Jhennifer', nome:'Ferraz Gravateiro', resp:'Ferraz', tel:'(62) 98435-7747', v:[]},
+  {vend:'Jhennifer', nome:'Igreja', resp:'Valter', tel:'(62) 98596-6391', v:[]},
+  {vend:'Jhennifer', nome:'Solidy', resp:'Watila', tel:'(62) 98208-5650', v:[]},
+  {vend:'Jhennifer', nome:'Castros Alfaitaria', resp:'Varcilei', tel:'(62) 98237-9080', v:[]},
+  {vend:'Jhennifer', nome:'João Guedes', resp:'', tel:'(62) 99629-6606', v:[]},
+  {vend:'Jhennifer', nome:'Kalebe', resp:'', tel:'(62) 99307-7981', v:[]},
+  {vend:'Jhennifer', nome:'Bruno Oliveira', resp:'', tel:'(62) 99298-2715', v:[]},
+  {vend:'Jhennifer', nome:'Mentor', resp:'Angelo', tel:'(99) 98489-3987', v:[]},
+  {vend:'Jhennifer', nome:'Canter', resp:'Jailson/Angela', tel:'(62) 98174-8865', v:[]},
+  {vend:'Jhennifer', nome:'Matheus Espindulla', resp:'', tel:'', v:[]},
+  {vend:'Jhennifer', nome:'Matheus Bigode', resp:'', tel:'', v:[]},
+  {vend:'Jhennifer', nome:'Gabriel (Cavaliere)', resp:'', tel:'(62) 99126-7020', v:[]},
+  {vend:'Jhennifer', nome:'Andresa Pacheco (Personal)', resp:'', tel:'(62) 99161-1212', v:[]},
+  {vend:'Jhennifer', nome:'Joel', resp:'', tel:'(62) 99900-4647', v:[]},
+  {vend:'Jhennifer', nome:'Katia', resp:'', tel:'(62) 99177-5929', v:[]},
+
+  // ---------- NATÁLIA ----------
+  {vend:'Natália', nome:'Sora / Victor De Niro', resp:'Sarah', tel:'', v:[['2026-05-16','Marcos Vidal',3]]},
+  {vend:'Natália', nome:'Guilherme', resp:'', tel:'', v:[]},
+  {vend:'Natália', nome:'Victor Quinino', resp:'Raquel', tel:'', v:[['2026-05-16','Marcos Vidal',3]]}
+];
+function expandSeed(list){
+  const base=Date.now()-list.length*200000;
+  return list.map((p,i)=>({
+    id:'sg'+(i+1),
+    nome:p.nome, responsavel:p.resp||'', telefone:p.tel||'',
+    vendedora:p.vend, compartilhadaCom:'', compartilhadaAte:'',
+    sapatosEntregues:p.sapEnt||0, premiosEntregues:p.premEnt||0,
+    criadoEm:base+i*1000, criadoPor:'Carga inicial',
+    vendas:(p.v||[]).map((r,j)=>({vid:'sd'+(i+1)+'-'+(j+1),data:r[0],cliente:r[1],pares:r[2],por:p.vend,em:base+i*1000+(j+1)*10}))
+  }));
+}
+function fmtData(iso){if(!iso)return '—';const [y,m,d]=iso.split('-');return `${d}/${m}/${y}`;}
+function diasDesde(iso){if(!iso)return null;const a=new Date(iso+'T00:00:00');const h=new Date();return Math.floor((h-a)/86400000);}
+function telLimpo(t){let d=(t||'').replace(/\D/g,'');if(d.length<=11)d='55'+d;return d;}
+
+/* compartilhamento (férias): retorna a vendedora compartilhada se ativa, senão '' */
+function compartilhadaAtiva(p){
+  if(!p.compartilhadaCom)return '';
+  if(p.compartilhadaAte && p.compartilhadaAte < hojeISO())return ''; // expirou
+  return p.compartilhadaCom;
+}
+/* parceiro pertence à vendedora (como dona ou via compartilhamento ativo) */
+function pertenceA(p,nome){return p.vendedora===nome || compartilhadaAtiva(p)===nome;}
+/* cadastro incompleto: falta telefone (dado que as vendedoras vão completar no painel) */
+function cadastroIncompleto(p){return !(p.telefone && p.telefone.trim());}
+function toggleFav(id){
+  const p=PARCEIROS.find(x=>x.id===id);if(!p)return;
+  p.favorito=!p.favorito;
+  salvarNuvem();render();
+  toast(p.favorito?'★ Favoritado':'Removido dos favoritos');
+}
+
+/* cálculos do parceiro */
+function calc(p){
+  const vendas=p.vendas||[];
+  const total=vendas.reduce((s,v)=>s+(Number(v.pares)||0),0);
+  const brindes=Math.floor(total/PARES_POR_BRINDE);             // sapatos grátis ganhos
+  const noCiclo=total%PARES_POR_BRINDE;
+  const faltam=noCiclo===0?(total>0?PARES_POR_BRINDE:PARES_POR_BRINDE):PARES_POR_BRINDE-noCiclo;
+  const pct=Math.round((noCiclo/PARES_POR_BRINDE)*100);
+  const ultima=vendas.length?vendas.map(v=>v.data).sort().slice(-1)[0]:null;
+  // entregas (registradas manualmente, limitadas ao ganho)
+  const sapEntregues=Math.min(Math.max(p.sapatosEntregues||0,0),brindes);
+  const sapPend=brindes-sapEntregues;
+  // escada de prêmio extra: a cada 5 sapatos grátis ganhos
+  const premios=Math.floor(brindes/SAPATOS_POR_PREMIO);
+  const premEntregues=Math.min(Math.max(p.premiosEntregues||0,0),premios);
+  const premPend=premios-premEntregues;
+  const faltaPremio=premios*SAPATOS_POR_PREMIO+SAPATOS_POR_PREMIO-brindes; // sapatos até o próximo prêmio
+  return {total,brindes,noCiclo,faltam,pct,ultima,dias:diasDesde(ultima),
+          sapEntregues,sapPend,premios,premEntregues,premPend,faltaPremio};
+}
+
+/* ===== PERSISTÊNCIA ===== */
+function salvarNuvem(){
+  const dados={parceiros:PARCEIROS,atualizado:Date.now()};
+  try{localStorage.setItem(LS_KEY,JSON.stringify(dados));}catch(_){}
+  if(FB_OK&&db&&!TEST_LOCAL){
+    db.collection(DOC_PATH[0]).doc(DOC_PATH[1]).set(dados,{merge:true})
+      .catch(e=>{console.warn(e);toast('Salvo localmente (sem nuvem)');});
+  }
+}
+function ouvirNuvem(){
+  // backup local primeiro
+  try{const c=JSON.parse(localStorage.getItem(LS_KEY)||'null');if(c&&c.parceiros){PARCEIROS=c.parceiros;render();}}catch(_){}
+  if(TEST_LOCAL && PARCEIROS.length===0){PARCEIROS=expandSeed(SEED_GERAL);salvarNuvem();render();}
+  if(FB_OK&&db&&!TEST_LOCAL){
+    db.collection(DOC_PATH[0]).doc(DOC_PATH[1]).onSnapshot(snap=>{
+      if(!snap.exists){ // primeira vez: sobe a carga inicial dos 53 parceiros
+        PARCEIROS=expandSeed(SEED_GERAL);salvarNuvem();render();return;
+      }
+      const d=snap.data();
+      if(d&&Array.isArray(d.parceiros)){PARCEIROS=d.parceiros;try{localStorage.setItem(LS_KEY,JSON.stringify(d));}catch(_){}render();}
+    },e=>console.warn(e));
+  }
+}
+
+/* ===== LOGIN ===== */
+function entrar(c){
+  conta=c;
+  $('uNome').textContent=c.nome;
+  $('uPapel').textContent=PAPEL_LABEL[c.papel];
+  $('uAv').textContent=ini(c.nome);
+  $('loginView').classList.remove('on');
+  $('appView').classList.add('on');
+  // vendedora só vê as próprias parcerias
+  if(c.papel==='vendedora'){filtroVend=c.nome;$('pVendRow').style.display='none';}
+  montarSeg();
+  ouvirNuvem();
+  render();
+}
+function sair(){if(!TEST_LOCAL&&auth)auth.signOut();location.reload();}
+
+if(TEST_LOCAL){
+  // modo teste: entra direto, sem login
+  $('loader').classList.add('off');
+  entrar(ACCOUNTS['lorettoscarpa@gmail.com']);
+}else if(auth){
+  auth.onAuthStateChanged(u=>{
+    $('loader').classList.add('off');
+    if(u&&u.email){const c=contaDe(u.email);if(c){entrar(c);return;}}
+    $('loginView').classList.add('on');
+  });
+}else{$('loader').classList.add('off');$('loginView').classList.add('on');}
+
+$('btnLogin').onclick=()=>{
+  const e=$('email').value.trim(),s=$('senha').value;
+  $('erro').textContent='';
+  if(!contaDe(e)){$('erro').textContent='E-mail não reconhecido na equipe.';return;}
+  if(!FB_OK){$('erro').textContent='Sem conexão com o banco.';return;}
+  $('btnLogin').disabled=true;
+  auth.signInWithEmailAndPassword(e,s)
+    .then(()=>{})
+    .catch(err=>{$('erro').textContent='E-mail ou senha incorretos.';console.warn(err);})
+    .finally(()=>$('btnLogin').disabled=false);
+};
+$('senha').addEventListener('keydown',ev=>{if(ev.key==='Enter')$('btnLogin').click();});
+$('btnSair').onclick=sair;
+if(TEST_LOCAL){
+  const bl=$('btnLimpar');
+  bl.style.display='inline-block';
+  bl.onclick=()=>{
+    if(!confirm('Apagar TODOS os dados de teste deste navegador? Esta ação não pode ser desfeita.'))return;
+    PARCEIROS=[];
+    try{localStorage.removeItem(LS_KEY);}catch(_){}
+    toast('Dados de teste apagados');
+    setTimeout(()=>location.reload(),500);
+  };
+}
+
+/* ===== UI: filtro por vendedora ===== */
+function montarSeg(){
+  const seg=$('segVend');seg.innerHTML='';
+  if(conta.papel==='vendedora')return; // vendedora não troca de filtro
+  const nInc=PARCEIROS.filter(cadastroIncompleto).length;
+  const opts=[['__todas','Todas']].concat(VENDEDORAS.map(v=>[v,v]));
+  if(nInc)opts.push(['__incompletos','⚠ Incompletos ('+nInc+')']);
+  opts.forEach(([val,lbl])=>{
+    const b=document.createElement('button');
+    b.className='chip'+(filtroVend===val?' active':'');
+    b.textContent=lbl;
+    b.onclick=()=>{filtroVend=val;montarSeg();render();};
+    seg.appendChild(b);
+  });
+}
+
+/* ===== RENDER ===== */
+function visiveis(){
+  let arr=PARCEIROS.slice();
+  if(conta.papel==='vendedora')arr=arr.filter(p=>pertenceA(p,conta.nome));
+  else if(filtroVend==='__incompletos')arr=arr.filter(cadastroIncompleto);
+  else if(filtroVend!=='__todas')arr=arr.filter(p=>pertenceA(p,filtroVend));
+  const q=$('busca').value.trim().toLowerCase();
+  if(q)arr=arr.filter(p=>(p.nome+' '+(p.responsavel||'')+' '+(p.vendedora||'')).toLowerCase().includes(q));
+  return arr.sort((a,b)=>{
+    const fa=a.favorito?1:0,fb=b.favorito?1:0;
+    if(fa!==fb)return fb-fa;                 // favoritos primeiro
+    const da=calc(a).ultima,db=calc(b).ultima;
+    if(da&&db)return db.localeCompare(da);   // venda mais recente primeiro
+    if(da&&!db)return -1;                     // com venda antes de sem venda
+    if(!da&&db)return 1;
+    return (a.nome||'').localeCompare(b.nome||'');
+  });
+}
+
+function render(){
+  if(!conta)return;
+  // KPIs
+  let base=PARCEIROS.slice();
+  if(conta.papel==='vendedora')base=base.filter(p=>pertenceA(p,conta.nome));
+  else if(filtroVend==='__incompletos')base=base.filter(cadastroIncompleto);
+  else if(filtroVend!=='__todas')base=base.filter(p=>pertenceA(p,filtroVend));
+  const totalPares=base.reduce((s,p)=>s+calc(p).total,0);
+  const sapAEntregar=base.reduce((s,p)=>s+calc(p).sapPend,0);
+  const premAEntregar=base.reduce((s,p)=>s+calc(p).premPend,0);
+  const inativos=base.filter(p=>{const c=calc(p);return c.dias!==null&&c.dias>DIAS_INATIVO;}).length;
+  $('kpis').innerHTML=`
+    <div class="kpi"><div class="kl">Parceiros</div><div class="kv">${base.length}</div><div class="ks">lojas ativas</div></div>
+    <div class="kpi"><div class="kl">Pares vendidos</div><div class="kv">${totalPares}</div><div class="ks">no total</div></div>
+    <div class="kpi"><div class="kl">Sapatos a entregar</div><div class="kv" style="color:${sapAEntregar?'var(--amber)':'var(--gold)'}">${sapAEntregar}</div><div class="ks">${premAEntregar} prêmios extras pendentes</div></div>
+    <div class="kpi"><div class="kl">Para reativar</div><div class="kv" style="color:${inativos?'var(--amber)':'var(--gold)'}">${inativos}</div><div class="ks">sem vendas há +${DIAS_INATIVO} dias</div></div>`;
+
+  const grid=$('grid');const arr=visiveis();
+  if(!arr.length){
+    grid.innerHTML=`<div class="empty" style="grid-column:1/-1"><h3>Nenhum parceiro por aqui</h3><p>Cadastre a primeira loja parceira no botão <b>Novo parceiro</b> e comece a registrar as vendas.</p></div>`;
+    return;
+  }
+  grid.innerHTML=arr.map(card).join('');
+  // bind
+  grid.querySelectorAll('[data-venda]').forEach(b=>b.onclick=()=>abrirVenda(b.dataset.venda));
+  grid.querySelectorAll('[data-wa]').forEach(b=>b.onclick=()=>waProgresso(b.dataset.wa));
+  grid.querySelectorAll('[data-rea]').forEach(b=>b.onclick=()=>waReativar(b.dataset.rea));
+  grid.querySelectorAll('[data-edit]').forEach(b=>b.onclick=()=>abrirParceiro(b.dataset.edit));
+  grid.querySelectorAll('[data-fav]').forEach(b=>b.onclick=()=>toggleFav(b.dataset.fav));
+  grid.querySelectorAll('[data-completar]').forEach(b=>b.onclick=()=>abrirParceiro(b.dataset.completar));
+  grid.querySelectorAll('[data-sap]').forEach(b=>b.onclick=()=>entregaSapato(b.dataset.id,parseInt(b.dataset.sap,10)));
+  grid.querySelectorAll('[data-prem]').forEach(b=>b.onclick=()=>entregaPremio(b.dataset.id,parseInt(b.dataset.prem,10)));
+}
+
+function card(p){
+  const c=calc(p);
+  const inativo=c.dias!==null&&c.dias>DIAS_INATIVO;
+  const ganhouAgora=c.total>0&&c.noCiclo===0;
+  const temPremioPend=c.premPend>0;
+  return `<div class="card${temPremioPend?' premio':''}${p.favorito?' fav':''}">
+    <div class="card-head">
+      <div class="avatar">${ini(p.nome)}</div>
+      <div class="card-id">
+        <div class="nome">${esc(p.nome)}</div>
+        <div class="resp">${p.responsavel?'Resp.: '+esc(p.responsavel):'Sem responsável'} · ${esc(p.telefone||'')}</div>
+      </div>
+      <div class="vend-tags">
+        <button class="fav-btn${p.favorito?' on':''}" data-fav="${p.id}" title="${p.favorito?'Desafixar':'Favoritar'}">${p.favorito?'★':'☆'}</button>
+        <span class="vend-tag">${esc(p.vendedora||'—')}</span>
+        ${compartilhadaAtiva(p)?`<span class="vend-tag share" title="Compartilhado para férias${p.compartilhadaAte?' até '+fmtData(p.compartilhadaAte):''}">⇄ ${esc(compartilhadaAtiva(p))}</span>`:''}
+      </div>
+    </div>
+
+    ${cadastroIncompleto(p)?`<button class="banner-incompleto" data-completar="${p.id}">⚠ Cadastro incompleto · falta o WhatsApp — toque para completar</button>`:''}
+
+    <div class="progress-box">
+      ${ganhouAgora
+        ? `<div class="gain">🎉 Fechou um ciclo — ${c.faltam} pares até o próximo sapato</div>`
+        : `<div class="pmeta"><span class="muted">Progresso do ciclo</span><span class="falta">faltam ${c.faltam} ${c.faltam===1?'par':'pares'}</span></div>`}
+      <div class="pbar"><i style="width:${c.pct}%"></i></div>
+      <div class="pmeta"><span class="muted">${c.noCiclo}/${PARES_POR_BRINDE} no ciclo atual</span><span class="muted">${fmtData(c.ultima)}</span></div>
+    </div>
+
+    <div class="stats-row">
+      <div class="stat"><div class="sl">Pares vendidos</div><div class="sv">${c.total}</div></div>
+      <div class="stat"><div class="sl">Sapatos ganhos</div><div class="sv brinde">${c.brindes}</div></div>
+      <div class="stat"><div class="sl">Última venda</div><div class="sv" style="font-size:16px">${c.dias===null?'—':c.dias+'d'}</div></div>
+    </div>
+
+    <!-- ESCADA DE BRINDES — só aparece quando há algo a entregar -->
+    ${(c.sapPend>0||c.premPend>0)?`<div class="brindes-box">
+      ${c.sapPend>0?`<div class="brinde-linha">
+        <div class="bl-info">
+          <div class="bl-tit">👞 Sapatos grátis</div>
+          <div class="bl-sub"><b class="pend">${c.sapPend} a entregar</b> · ${c.sapEntregues}/${c.brindes} já entregues</div>
+        </div>
+        <button class="entregar-btn" data-sap="1" data-id="${p.id}">✓ entreguei 1</button>
+      </div>`:''}
+      ${c.premPend>0?`<div class="brinde-linha">
+        <div class="bl-info">
+          <div class="bl-tit">🎁 ${PREMIO_LABEL} <span class="bl-rule">(a cada ${SAPATOS_POR_PREMIO} sapatos)</span></div>
+          <div class="bl-sub"><b class="pend">${c.premPend} a entregar</b> · ${c.premEntregues}/${c.premios} já entregues</div>
+        </div>
+        <button class="entregar-btn" data-prem="1" data-id="${p.id}">✓ entreguei 1</button>
+      </div>`:''}
+    </div>`:''}
+
+    ${inativo?`<div><span class="badge-inativo">⚠ inativo há ${c.dias} dias</span></div>`:''}
+
+    <div class="card-actions">
+      <button class="act venda" data-venda="${p.id}">
+        <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> Registrar venda
+      </button>
+      <button class="act wa" data-wa="${p.id}">
+        <svg viewBox="0 0 24 24"><path d="M21 11.5a8.5 8.5 0 0 1-12.5 7.5L3 21l2-5A8.5 8.5 0 1 1 21 11.5z"/></svg> Avisar progresso
+      </button>
+      <button class="act" data-rea="${p.id}">
+        <svg viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 4v4h4"/></svg> Reativar
+      </button>
+      <button class="act" data-edit="${p.id}">
+        <svg viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg> Editar
+      </button>
+    </div>
+  </div>`;
+}
+function esc(s){return (s||'').replace(/[&<>"]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m]));}
+
+/* ===== ENTREGA DE BRINDES (no card: só marca +1) ===== */
+function entregaSapato(id,delta){
+  const p=PARCEIROS.find(x=>x.id===id);if(!p)return;
+  const c=calc(p);
+  p.sapatosEntregues=Math.min(Math.max((p.sapatosEntregues||0)+delta,0),c.brindes);
+  salvarNuvem();render();
+  toast(delta>0?'Sapato marcado como entregue':'Entrega desfeita');
+}
+function entregaPremio(id,delta){
+  const p=PARCEIROS.find(x=>x.id===id);if(!p)return;
+  const c=calc(p);
+  p.premiosEntregues=Math.min(Math.max((p.premiosEntregues||0)+delta,0),c.premios);
+  salvarNuvem();render();
+  toast(delta>0?'Prêmio extra marcado como entregue':'Entrega desfeita');
+}
+
+/* ===== WHATSAPP ===== */
+function waProgresso(id){
+  const p=PARCEIROS.find(x=>x.id===id);if(!p)return;
+  const c=calc(p);
+  const oi=p.responsavel?`Olá, ${p.responsavel.split(' ')[0]}!`:'Olá!';
+  let msg;
+  if(c.total===0){msg=`${oi} Aqui é da Loretto Scarpa 🦁 Vamos começar nossa parceria? A cada 10 pares vendidos você ganha 1 par grátis!`;}
+  else if(c.noCiclo===0){msg=`${oi} Você acabou de fechar mais um ciclo na parceria Loretto Scarpa 🦁 Já são ${c.brindes} ${c.brindes===1?'par grátis':'pares grátis'} acumulados! Bora pro próximo?`;}
+  else{msg=`${oi} Na sua parceria Loretto Scarpa 🦁 você já vendeu ${c.total} pares. Faltam só *${c.faltam} ${c.faltam===1?'par':'pares'}* para você ganhar mais um par grátis!`;}
+  window.open(`https://wa.me/${telLimpo(p.telefone)}?text=${encodeURIComponent(msg)}`,'_blank');
+}
+function waReativar(id){
+  const p=PARCEIROS.find(x=>x.id===id);if(!p)return;
+  const c=calc(p);
+  const oi=p.responsavel?`Olá, ${p.responsavel.split(' ')[0]}!`:'Olá!';
+  const tempo=c.dias?` Faz ${c.dias} dias desde a última venda registrada.`:'';
+  const msg=`${oi} Sentimos sua falta na parceria Loretto Scarpa 🦁${tempo} Tem novidade chegando e queremos te mandar o catálogo atualizado. Posso te enviar?`;
+  window.open(`https://wa.me/${telLimpo(p.telefone)}?text=${encodeURIComponent(msg)}`,'_blank');
+}
+
+/* ===== MODAL PARCEIRO ===== */
+function preencherVendSelect(sel){
+  const s=$('pVend');s.innerHTML='';
+  VENDEDORAS.forEach(v=>{const o=document.createElement('option');o.value=v;o.textContent=v;if(v===sel)o.selected=true;s.appendChild(o);});
+}
+function preencherShareSelect(dona,sel){
+  const s=$('pShare');s.innerHTML='';
+  const nenhuma=document.createElement('option');nenhuma.value='';nenhuma.textContent='— ninguém —';s.appendChild(nenhuma);
+  VENDEDORAS.filter(v=>v!==dona).forEach(v=>{const o=document.createElement('option');o.value=v;o.textContent=v;if(v===sel)o.selected=true;s.appendChild(o);});
+  if(!sel)s.value='';
+}
+// ao trocar a dona, recalcula opções de compartilhamento; ao escolher, mostra/oculta data
+document.addEventListener('change',e=>{
+  if(e.target&&e.target.id==='pVend'){preencherShareSelect($('pVend').value,$('pShare').value);$('pShareAteWrap').style.display=$('pShare').value?'block':'none';}
+  if(e.target&&e.target.id==='pShare'){$('pShareAteWrap').style.display=$('pShare').value?'block':'none';if(!$('pShare').value)$('pShareAte').value='';}
+});
+function abrirParceiro(id){
+  const novo=!id;
+  $('pEditId').value=id||'';
+  const p=novo?{}:PARCEIROS.find(x=>x.id===id)||{};
+  $('pNome').value=p.nome||'';
+  $('pResp').value=p.responsavel||'';
+  $('pTel').value=p.telefone||'';
+  document.querySelector('#scrimParceiro h2').innerHTML=novo?'Novo <em>parceiro</em>':'Editar <em>parceiro</em>';
+  if(conta.papel==='vendedora'){$('pVendRow').style.display='none';$('pShareRow').style.display='none';}
+  else{
+    $('pVendRow').style.display='block';preencherVendSelect(p.vendedora||VENDEDORAS[0]);
+    $('pShareRow').style.display='block';
+    preencherShareSelect(p.vendedora||VENDEDORAS[0],p.compartilhadaCom||'');
+    $('pShareAte').value=p.compartilhadaAte||'';
+    $('pShareAteWrap').style.display=(p.compartilhadaCom)?'block':'none';
+  }
+  // bloco de correção de brindes entregues (só em parceiro existente que já ganhou algo)
+  const box=$('pBrindesBox');
+  if(!novo){
+    const c=calc(p);
+    if(c.brindes>0){
+      pEdB={sap:c.sapEntregues,prem:c.premEntregues,maxSap:c.brindes,maxPrem:c.premios};
+      box.style.display='block';renderEdB();
+    }else{box.style.display='none';}
+  }else{box.style.display='none';}
+  $('scrimParceiro').classList.add('on');
+  $('pNome').focus();
+}
+let pEdB={sap:0,prem:0,maxSap:0,maxPrem:0};
+function renderEdB(){
+  $('pSapVal').textContent=pEdB.sap;
+  $('pPremVal').textContent=pEdB.prem;
+  $('pSapMax').textContent=`${pEdB.sap} de ${pEdB.maxSap} ganhos`;
+  $('pPremMax').textContent=`${pEdB.prem} de ${pEdB.maxPrem} ganhos`;
+  $('pSapMinus').disabled=pEdB.sap<=0;$('pSapPlus').disabled=pEdB.sap>=pEdB.maxSap;
+  $('pPremMinus').disabled=pEdB.prem<=0;$('pPremPlus').disabled=pEdB.prem>=pEdB.maxPrem;
+}
+$('pSapMinus').onclick=()=>{pEdB.sap=Math.max(0,pEdB.sap-1);renderEdB();};
+$('pSapPlus').onclick=()=>{pEdB.sap=Math.min(pEdB.maxSap,pEdB.sap+1);renderEdB();};
+$('pPremMinus').onclick=()=>{pEdB.prem=Math.max(0,pEdB.prem-1);renderEdB();};
+$('pPremPlus').onclick=()=>{pEdB.prem=Math.min(pEdB.maxPrem,pEdB.prem+1);renderEdB();};
+$('btnSalvarParceiro').onclick=()=>{
+  const nome=$('pNome').value.trim(),tel=$('pTel').value.trim();
+  if(!nome){toast('Informe o nome da loja');return;}
+  if(!tel){toast('Informe o WhatsApp');return;}
+  const vend=conta.papel==='vendedora'?conta.nome:$('pVend').value;
+  const share=conta.papel==='vendedora'?'':($('pShare').value||'');
+  const shareAte=share?($('pShareAte').value||''):'';
+  const id=$('pEditId').value;
+  if(id){
+    const p=PARCEIROS.find(x=>x.id===id);
+    if(p){p.nome=nome;p.responsavel=$('pResp').value.trim();p.telefone=tel;p.vendedora=vend;
+      p.compartilhadaCom=share;p.compartilhadaAte=shareAte;
+      if($('pBrindesBox').style.display!=='none'){p.sapatosEntregues=pEdB.sap;p.premiosEntregues=pEdB.prem;}}
+    toast('Parceiro atualizado');
+  }else{
+    PARCEIROS.push({id:uid(),nome,responsavel:$('pResp').value.trim(),telefone:tel,vendedora:vend,compartilhadaCom:share,compartilhadaAte:shareAte,criadoEm:Date.now(),criadoPor:conta.nome,vendas:[]});
+    toast('Parceiro cadastrado');
+  }
+  salvarNuvem();render();
+  $('scrimParceiro').classList.remove('on');
+};
+
+/* ===== MODAL VENDA ===== */
+let vendaEdit=null; // vid em edição, ou null
+let histExpandido=false;
+function vidDe(v){if(!v.vid)v.vid='v'+(v.em||Date.now())+Math.random().toString(36).slice(2,5);return v.vid;}
+function resetFormVenda(){
+  vendaEdit=null;
+  $('vData').value=hojeISO();
+  $('vCliente').value='';
+  $('vPares').value=1;
+  $('vObs').value='';
+  $('btnSalvarVenda').textContent='Adicionar venda';
+  $('vEditAviso').style.display='none';
+}
+function abrirVenda(id){
+  const p=PARCEIROS.find(x=>x.id===id);if(!p)return;
+  (p.vendas||[]).forEach(vidDe); // garante id em vendas antigas
+  $('vParceiroId').value=id;
+  $('vSub').textContent=`${p.nome} · ${p.vendedora||''}`;
+  histExpandido=false;
+  resetFormVenda();
+  renderHistorico(p);
+  $('scrimVenda').classList.add('on');
+}
+function renderHistorico(p){
+  const todas=(p.vendas||[]).slice().sort((a,b)=>{
+    const d=(b.data||'').localeCompare(a.data||'');
+    if(d!==0)return d;          // data mais recente primeiro
+    return (b.em||0)-(a.em||0); // empate na data: lançamento mais recente primeiro
+  });
+  const el=$('vHistorico');
+  const btn=$('vVerTodas');
+  if(!todas.length){el.innerHTML='<div class="vl-empty">Nenhuma venda registrada ainda.</div>';btn.style.display='none';el.classList.remove('expandido');return;}
+  const v=histExpandido?todas:todas.slice(0,3);
+  el.classList.toggle('expandido',histExpandido);
+  el.innerHTML=v.map(x=>`<div class="vl-item${vendaEdit===x.vid?' editando':''}">
+      <span class="vl-info">${esc(x.cliente||'Sem nome')} <span class="vd">${fmtData(x.data)}</span>${x.obs?`<span class="vl-obs">${esc(x.obs)}</span>`:''}</span>
+      <span class="vp">${x.pares}p</span>
+      <button class="vl-act" title="Editar" data-edv="${x.vid}"><svg viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg></button>
+      <button class="vl-act del" title="Excluir" data-delv="${x.vid}"><svg viewBox="0 0 24 24"><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M19 6l-1 14H6L5 6"/></svg></button>
+    </div>`).join('');
+  el.querySelectorAll('[data-edv]').forEach(b=>b.onclick=()=>editarVenda(p,b.dataset.edv));
+  el.querySelectorAll('[data-delv]').forEach(b=>b.onclick=()=>excluirVenda(p,b.dataset.delv));
+  if(todas.length>3){
+    btn.style.display='block';
+    btn.textContent=histExpandido?'▲ Mostrar menos':`▼ Ver lista completa (${todas.length})`;
+    btn.onclick=()=>{histExpandido=!histExpandido;renderHistorico(p);};
+  }else{btn.style.display='none';}
+}
+function editarVenda(p,vid){
+  const v=(p.vendas||[]).find(x=>x.vid===vid);if(!v)return;
+  vendaEdit=vid;
+  $('vData').value=v.data||hojeISO();
+  $('vCliente').value=v.cliente||'';
+  $('vPares').value=v.pares;
+  $('vObs').value=v.obs||'';
+  $('btnSalvarVenda').textContent='Atualizar venda';
+  $('vEditAviso').style.display='block';
+  renderHistorico(p);
+  $('vPares').focus();
+}
+function excluirVenda(p,vid){
+  if(!confirm('Excluir esta venda? Os totais e brindes serão recalculados.'))return;
+  p.vendas=(p.vendas||[]).filter(x=>x.vid!==vid);
+  if(vendaEdit===vid)resetFormVenda();
+  salvarNuvem();renderHistorico(p);render();
+  toast('Venda excluída');
+}
+$('btnSalvarVenda').onclick=()=>{
+  const id=$('vParceiroId').value;
+  const p=PARCEIROS.find(x=>x.id===id);if(!p)return;
+  const pares=parseInt($('vPares').value,10);
+  if(!pares||pares<1){toast('Informe a quantidade de pares');return;}
+  const obs=$('vObs').value.trim();
+  const antes=calc(p).brindes;
+  p.vendas=p.vendas||[];
+  if(vendaEdit){
+    const v=p.vendas.find(x=>x.vid===vendaEdit);
+    if(v){v.data=$('vData').value||hojeISO();v.cliente=$('vCliente').value.trim();v.pares=pares;v.obs=obs;}
+    toast('Venda corrigida');
+  }else{
+    p.vendas.push({vid:'v'+Date.now()+Math.random().toString(36).slice(2,5),data:$('vData').value||hojeISO(),cliente:$('vCliente').value.trim(),pares,obs,por:conta.nome,em:Date.now()});
+    const depois=calc(p).brindes;
+    if(depois>antes)toast('🎉 Novo brinde! '+p.nome+' ganhou um par grátis');
+    else toast('Venda registrada');
+  }
+  salvarNuvem();
+  resetFormVenda();
+  renderHistorico(p);
+  render();
+};
+
+/* ===== RELATÓRIO DO PARCEIRO ===== */
+$('btnRelatorio').onclick=()=>gerarRelatorioParceiro($('vParceiroId').value);
+$('btnEnviarWa').onclick=()=>enviarRelatorioWhatsApp($('vParceiroId').value);
+
+const RELATORIO_CSS=`*{box-sizing:border-box}body{font-family:Helvetica,Arial,sans-serif;color:#2b2b22;margin:0;padding:24px}
+  .cover{background:#3b4a22;color:#f1ede1;padding:20px 22px;border-radius:8px;margin-bottom:18px}
+  .cover .sub{font-size:11px;letter-spacing:2px;text-transform:uppercase;color:#c9a950}
+  .cover h1{font-family:Georgia,serif;font-size:21px;margin:4px 0 2px}
+  .cover .meta{font-size:10px;color:#d8d4c4;margin-top:8px}
+  .ident{font-size:12px;margin:0 2px 14px;display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
+  .ident b{color:#4a5c2a}
+  .kpis{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:18px}
+  .k{flex:1;min-width:120px;border:1px solid #cfcabb;border-radius:8px;padding:10px 12px}
+  .k .l{font-size:9px;letter-spacing:.5px;text-transform:uppercase;color:#6f6f5e}
+  .k .v{font-family:Georgia,serif;font-size:22px;color:#4a5c2a;margin-top:2px}
+  .k .v.amber{color:#c47a32}
+  table{width:100%;border-collapse:collapse;font-size:11px}
+  th{background:#f1ede1;color:#4a5c2a;text-align:left;padding:6px 9px;font-size:9px;text-transform:uppercase;letter-spacing:.5px;border-bottom:1px solid #cfcabb}
+  td{padding:5px 9px;border-bottom:1px solid #ededed}
+  .dt{width:92px;white-space:nowrap}.qt{width:70px;text-align:center}th.qt{text-align:center}
+  .ro{font-size:8.5px;color:#8a8a78;font-style:italic;margin-top:2px}
+  .obs{font-size:9px;color:#6f6f5e;margin-top:6px}
+  @media print{body{padding:0}.cover{border-radius:0}}`;
+
+function relatorioBody(p){
+  const c=calc(p);
+  const linhas=(p.vendas||[]).slice().sort((a,b)=>(a.data||'').localeCompare(b.data||''))
+    .map(x=>`<tr><td class="dt">${fmtData(x.data)}</td><td>${esc(x.cliente||'Sem nome')}${x.obs?`<div class="ro">${esc(x.obs)}</div>`:''}</td><td class="qt">${x.pares}</td></tr>`).join('')
+    || '<tr><td colspan="3" style="text-align:center;color:#888;padding:14px">Nenhuma venda registrada.</td></tr>';
+  const ger=new Date().toLocaleDateString('pt-BR');
+  const tel=p.telefone?` · ${esc(p.telefone)}`:'';
+  return `<div class="cover"><div class="sub">Loretto Scarpa · Parcerias</div>
+    <h1>Relatório do Parceiro</h1>
+    <div class="meta">Gerado em ${ger} · vendedora ${esc(p.vendedora||'—')}</div></div>
+  <div class="ident"><span><b>Loja Parceira:</b> ${esc(p.nome)}</span>
+    <span><b>Responsável:</b> ${esc(p.responsavel||'—')}${tel}</span></div>
+  <div class="kpis">
+    <div class="k"><div class="l">Pares vendidos</div><div class="v">${c.total}</div></div>
+    <div class="k"><div class="l">Sapatos grátis ganhos</div><div class="v">${c.brindes}</div></div>
+    <div class="k"><div class="l">Sapatos entregues</div><div class="v">${c.sapEntregues}</div></div>
+    <div class="k"><div class="l">Sapatos a entregar</div><div class="v${c.sapPend?' amber':''}">${c.sapPend}</div></div>
+    ${c.premios>0?`<div class="k"><div class="l">Prêmios extras ganhos</div><div class="v">${c.premios}</div></div>
+    <div class="k"><div class="l">Prêmios a entregar</div><div class="v${c.premPend?' amber':''}">${c.premPend}</div></div>`:''}
+  </div>
+  <table><thead><tr><th class="dt">Data da Venda</th><th>Nome do Cliente</th><th class="qt">Pares</th></tr></thead>
+    <tbody>${linhas}</tbody>
+    <tfoot><tr><td></td><td style="text-align:right;color:#6f6f5e">Total</td><td class="qt"><b>${c.total}</b></td></tr></tfoot></table>
+  <div class="obs">Regra: a cada 10 pares vendidos o parceiro ganha 1 sapato grátis${c.premios>0?'; a cada 5 sapatos ganhos, 1 prêmio extra':''}. Faltam ${c.faltam} ${c.faltam===1?'par':'pares'} para o próximo sapato.</div>`;
+}
+
+function resumoTexto(p){
+  const c=calc(p);
+  let t=`*Loretto Scarpa — Relatório de Parceria*\n`;
+  t+=`Loja: ${p.nome}\n`;
+  t+=`Pares vendidos: ${c.total}\n`;
+  t+=`Sapatos grátis ganhos: ${c.brindes}\n`;
+  if(c.sapPend>0)t+=`Sapatos a entregar: ${c.sapPend}\n`;
+  if(c.premios>0)t+=`Prêmios extras ganhos: ${c.premios}\n`;
+  t+=`Faltam ${c.faltam} ${c.faltam===1?'par':'pares'} para o próximo sapato grátis.`;
+  return t;
+}
+
+function gerarRelatorioParceiro(id){
+  const p=PARCEIROS.find(x=>x.id===id);if(!p){toast('Abra um parceiro primeiro');return;}
+  const doc=`<!doctype html><html><head><meta charset="utf-8"><title>Relatório · ${esc(p.nome)}</title>
+  <style>@page{size:A4 landscape;margin:12mm}${RELATORIO_CSS}</style></head><body>
+  ${relatorioBody(p)}
+  <script>window.onload=function(){setTimeout(function(){window.print();},250);}<\/script></body></html>`;
+  const w=window.open('','_blank');
+  if(!w){toast('Permita pop-ups para gerar o relatório');return;}
+  w.document.open();w.document.write(doc);w.document.close();
+}
+
+async function enviarRelatorioWhatsApp(id){
+  const p=PARCEIROS.find(x=>x.id===id);if(!p){toast('Abra um parceiro primeiro');return;}
+  const resumo=resumoTexto(p);
+  const abrirWaTexto=()=>{ if(p.telefone)window.open('https://wa.me/'+telLimpo(p.telefone)+'?text='+encodeURIComponent(resumo),'_blank'); };
+  if(typeof html2pdf==='undefined'){
+    // sem gerador de PDF: manda o resumo em texto
+    if(p.telefone){abrirWaTexto();toast('Abrindo WhatsApp com o resumo');}
+    else toast('Parceiro sem WhatsApp — complete o cadastro');
+    return;
+  }
+  const holder=document.createElement('div');
+  holder.style.cssText='position:fixed;left:-9999px;top:0;width:1100px;background:#fff';
+  holder.innerHTML=`<style>${RELATORIO_CSS}</style>${relatorioBody(p)}`;
+  document.body.appendChild(holder);
+  toast('Gerando PDF…');
+  try{
+    const blob=await html2pdf().set({margin:6,image:{type:'jpeg',quality:.96},html2canvas:{scale:2,backgroundColor:'#ffffff'},jsPDF:{unit:'mm',format:'a4',orientation:'landscape'}}).from(holder).outputPdf('blob');
+    document.body.removeChild(holder);
+    const file=new File([blob],`Relatorio ${p.nome}.pdf`,{type:'application/pdf'});
+    if(navigator.canShare&&navigator.canShare({files:[file]})){
+      await navigator.share({files:[file],title:'Relatório '+p.nome,text:resumo});
+    }else{
+      const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=`Relatorio ${p.nome}.pdf`;a.click();setTimeout(()=>URL.revokeObjectURL(url),4000);
+      abrirWaTexto();
+      toast('PDF baixado — anexe na conversa que abriu');
+    }
+  }catch(e){console.warn(e);try{document.body.removeChild(holder);}catch(_){}
+    if(e&&e.name==='AbortError')return; // usuário cancelou o compartilhamento
+    abrirWaTexto();toast('Enviei o resumo em texto (PDF indisponível neste aparelho)');
+  }
+}
+
+/* fechar modais */
+document.querySelectorAll('[data-close]').forEach(b=>b.onclick=()=>$(b.dataset.close).classList.remove('on'));
+document.querySelectorAll('.scrim').forEach(s=>s.onclick=e=>{if(e.target===s)s.classList.remove('on');});
+
+/* busca */
+$('busca').addEventListener('input',render);
+</script>
+</body>
+</html>
