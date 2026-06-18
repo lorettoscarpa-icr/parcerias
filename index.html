@@ -203,6 +203,69 @@
 </style>
 </head>
 <body>
+<style>
+  /* ===== NAVEGAÇÃO DE VIEWS ===== */
+  .pnav{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px}
+  .pnav-b{font-family:'Barlow',sans-serif;font-size:14px;font-weight:600;padding:10px 18px;border-radius:999px;border:1px solid var(--linha);background:rgba(255,255,255,.04);color:var(--creme-suave);cursor:pointer;transition:.18s}
+  .pnav-b:hover{color:var(--creme);border-color:rgba(212,180,90,.4)}
+  .pnav-b.on{background:linear-gradient(135deg,var(--gold),#c79a3b);color:#1c2114;border-color:var(--gold);box-shadow:0 8px 20px -10px rgba(212,180,90,.7)}
+  /* ===== NÍVEL (selo no card) ===== */
+  .nivel-badge{font-size:11px;font-weight:700;padding:2px 9px;border-radius:999px;border:1px solid;letter-spacing:.02em;white-space:nowrap}
+  /* ===== MARCOS ===== */
+  #marcos{margin-bottom:18px;background:rgba(212,180,90,.06);border:1px solid var(--linha);border-radius:16px;padding:14px 16px}
+  .marcos-h{font-family:'Barlow',sans-serif;font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--gold);font-weight:700;margin-bottom:10px}
+  .marcos-h span{opacity:.7}
+  .marco{display:flex;align-items:center;gap:12px;padding:9px 0;border-top:1px solid var(--linha-fraca)}
+  .marco:first-of-type{border-top:none}
+  .marco-info{flex:1;min-width:0}
+  .marco-info b{display:block;color:var(--creme);font-size:14.5px}
+  .marco-info small{color:var(--creme-suave);font-size:12.5px}
+  .marco.entregar .marco-info b{color:var(--gold-claro)}
+  .marco-b{flex:0 0 auto;font-family:'Barlow',sans-serif;font-size:12.5px;font-weight:700;padding:7px 14px;border-radius:999px;border:1px solid rgba(212,180,90,.42);background:rgba(212,180,90,.14);color:var(--gold-claro);cursor:pointer}
+  .marco-b:hover{background:rgba(212,180,90,.24)}
+  .marco-acts{display:flex;gap:7px;flex:0 0 auto}
+  .marco-b.ok{background:rgba(127,174,107,.18);color:#8fbf7a;border-color:rgba(127,174,107,.42)}
+  .marco-b.ok:hover{background:rgba(127,174,107,.3)}
+  /* ===== BOTÕES DE WHATSAPP — verde padrão (estilo do painel de Entregas) ===== */
+  .act.wa, .marco-b.wa, #btnEnviarWa{background:linear-gradient(135deg,#7fae6b,#5f9152)!important;color:#16210f!important;border:1px solid #5f9152!important;box-shadow:0 8px 20px -9px rgba(127,174,107,.55)}
+  .act.wa:hover, .marco-b.wa:hover, #btnEnviarWa:hover{filter:brightness(1.06)}
+  .act.wa svg{fill:#16210f}
+  /* ===== RANKING ===== */
+  .rk-legend{color:var(--creme-suave);font-size:12.5px;margin-bottom:14px}
+  .rk-row{display:flex;align-items:center;gap:14px;background:rgba(255,255,255,.04);border:1px solid var(--linha);border-radius:14px;padding:13px 16px;margin-bottom:9px;transition:.18s}
+  .rk-row:hover{transform:translateY(-2px);box-shadow:0 12px 30px rgba(0,0,0,.32);border-color:rgba(212,180,90,.4)}
+  .rk-row.top{border-color:rgba(212,180,90,.4);background:rgba(212,180,90,.06)}
+  .rk-pos{flex:0 0 42px;font-size:20px;font-weight:700;color:var(--gold);text-align:center}
+  .rk-id{flex:1;min-width:0}
+  .rk-id b{display:block;font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:600;color:var(--creme)}
+  .rk-id small{color:var(--creme-suave);font-size:12px}
+  .rk-niv{flex:0 0 auto;font-size:13px;font-weight:700}
+  .rk-tot{flex:0 0 auto;text-align:right;min-width:54px}
+  .rk-tot b{display:block;font-family:'Cormorant Garamond',serif;font-size:26px;font-weight:600;color:var(--gold-claro);line-height:1}
+  .rk-tot span{font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:var(--creme-suave)}
+  /* ===== PAINEL DO GESTOR ===== */
+  .pn-kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:22px}
+  .pn-k{background:rgba(255,255,255,.04);border:1px solid var(--linha);border-radius:14px;padding:16px 18px}
+  .pn-k.alert{border-color:rgba(212,180,90,.42);background:rgba(212,180,90,.07)}
+  .pn-l{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--creme-suave);font-weight:600}
+  .pn-v{font-family:'Cormorant Garamond',serif;font-size:34px;font-weight:600;color:var(--gold-claro);line-height:1.1;margin-top:4px;text-shadow:0 0 30px rgba(212,180,90,.12)}
+  .pn-s{font-size:11.5px;color:var(--creme-suave);margin-top:2px}
+  .pn-sec{font-family:'Barlow',sans-serif;font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--gold);font-weight:700;margin-bottom:10px}
+  .pn-vlist{display:flex;flex-direction:column;gap:7px}
+  .pn-vrow{display:flex;justify-content:space-between;background:rgba(255,255,255,.04);border:1px solid var(--linha);border-radius:11px;padding:11px 16px;color:var(--creme)}
+  .pn-vrow b{color:var(--gold-claro)}
+  /* ===== HISTÓRICO ===== */
+  .hist-h{font-family:'Barlow',sans-serif;font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--gold);font-weight:700;margin-bottom:14px}
+  .hist-h span{opacity:.7}
+  .hist-row{display:flex;align-items:center;gap:13px;background:rgba(255,255,255,.04);border:1px solid var(--linha);border-radius:12px;padding:11px 15px;margin-bottom:8px}
+  .hist-ic{flex:0 0 auto;font-size:22px}
+  .hist-id{flex:1;min-width:0}
+  .hist-id b{display:block;color:var(--creme);font-size:15px}
+  .hist-id small{color:var(--creme-suave);font-size:12px}
+  .hist-data{flex:0 0 auto;font-size:13px;color:var(--gold-claro);font-weight:600}
+  .empty h3{color:var(--creme);margin-bottom:6px}
+  .empty p{color:var(--creme-suave);font-size:13px}
+</style>
 
 <!-- LOADER -->
 <div class="loader" id="loader"><div class="ring"></div></div>
@@ -236,6 +299,15 @@
   </div>
 
   <div class="wrap">
+    <div class="pnav" id="pnav">
+      <button class="pnav-b on" data-v="parceiros" onclick="setView('parceiros')">Parceiros</button>
+      <button class="pnav-b" data-v="ranking" onclick="setView('ranking')">🏆 Ranking</button>
+      <button class="pnav-b" data-v="hist" onclick="setView('hist')">📜 Histórico</button>
+      <button class="pnav-b" data-v="painel" id="pnav-painel" onclick="setView('painel')" style="display:none">📊 Painel</button>
+    </div>
+
+    <div id="view-parceiros">
+    <div id="marcos" style="display:none"></div>
     <div class="kpis" id="kpis"></div>
 
     <div class="toolbar">
@@ -248,6 +320,11 @@
     </div>
 
     <div class="grid" id="grid"></div>
+    </div><!-- /view-parceiros -->
+
+    <div id="view-ranking" style="display:none"></div>
+    <div id="view-hist" style="display:none"></div>
+    <div id="view-painel" style="display:none"></div>
   </div>
 </div>
 
@@ -304,7 +381,7 @@
     <div class="modal-actions">
       <button class="btn ghost" data-close="scrimVenda">Fechar</button>
       <button class="btn ghost" id="btnRelatorio" type="button">📄 Relatório</button>
-      <button class="btn ghost" id="btnEnviarWa" type="button">📲 Enviar</button>
+      <button class="btn ghost" id="btnEnviarWa" type="button"><svg viewBox="0 0 24 24" width="1em" height="1em" fill="currentColor" aria-hidden="true" style="vertical-align:-2px"><path d="M12.04 2c-5.46 0-9.91 4.45-9.91 9.91 0 1.75.46 3.45 1.32 4.95L2.05 22l5.25-1.38c1.45.79 3.08 1.21 4.74 1.21h.01c5.46 0 9.91-4.45 9.91-9.91 0-2.65-1.03-5.14-2.9-7.01A9.82 9.82 0 0 0 12.04 2zm0 18.15h-.01c-1.48 0-2.93-.4-4.2-1.15l-.3-.18-3.12.82.83-3.04-.2-.31a8.18 8.18 0 0 1-1.26-4.38c0-4.54 3.7-8.24 8.25-8.24 2.2 0 4.27.86 5.82 2.42a8.18 8.18 0 0 1 2.41 5.82c0 4.55-3.7 8.24-8.25 8.24zm4.52-6.16c-.25-.12-1.47-.72-1.69-.81-.23-.08-.39-.12-.56.12-.17.25-.64.81-.79.97-.14.17-.29.19-.54.06-.25-.12-1.05-.39-1.99-1.23-.74-.66-1.23-1.47-1.38-1.72-.14-.25-.02-.38.11-.51.11-.11.25-.29.37-.43.12-.14.17-.25.25-.41.08-.17.04-.31-.02-.43-.06-.12-.56-1.34-.76-1.84-.2-.48-.4-.42-.56-.43h-.47c-.17 0-.43.06-.66.31-.22.25-.86.85-.86 2.07 0 1.22.89 2.4 1.01 2.56.12.17 1.75 2.67 4.23 3.74.59.26 1.05.41 1.41.52.59.19 1.13.16 1.56.1.48-.07 1.47-.6 1.68-1.18.21-.58.21-1.07.14-1.18-.06-.1-.22-.16-.47-.28z"/></svg> Enviar Relatório</button>
       <button class="btn" id="btnSalvarVenda">Adicionar venda</button>
     </div>
   </div>
@@ -331,6 +408,14 @@ const VENDEDORAS=['Jhennifer','Ialey','Michelly','Natália'];
 const PARES_POR_BRINDE   = 10;  // a cada 10 pares vendidos = 1 sapato grátis
 const SAPATOS_POR_PREMIO = 5;   // a cada 5 sapatos grátis ganhos = 1 prêmio extra (copo / produto da loja)
 const PREMIO_LABEL = 'Prêmio extra';
+const NIVEIS = [
+  {min:50, nome:'Ouro',   emoji:'🥇', cor:'#d4b45a'},
+  {min:20, nome:'Prata',  emoji:'🥈', cor:'#cfd2d6'},
+  {min:1,  nome:'Bronze', emoji:'🥉', cor:'#c08457'},
+  {min:0,  nome:'Novo',   emoji:'•',  cor:'rgba(248,243,230,.5)'}
+];
+function nivelDe(total){ return NIVEIS.find(n=>(total||0)>=n.min) || NIVEIS[NIVEIS.length-1]; }
+const WA_ICON = '<svg viewBox="0 0 24 24" width="1em" height="1em" fill="currentColor" aria-hidden="true" style="vertical-align:-2px"><path d="M12.04 2c-5.46 0-9.91 4.45-9.91 9.91 0 1.75.46 3.45 1.32 4.95L2.05 22l5.25-1.38c1.45.79 3.08 1.21 4.74 1.21h.01c5.46 0 9.91-4.45 9.91-9.91 0-2.65-1.03-5.14-2.9-7.01A9.82 9.82 0 0 0 12.04 2zm0 18.15h-.01c-1.48 0-2.93-.4-4.2-1.15l-.3-.18-3.12.82.83-3.04-.2-.31a8.18 8.18 0 0 1-1.26-4.38c0-4.54 3.7-8.24 8.25-8.24 2.2 0 4.27.86 5.82 2.42a8.18 8.18 0 0 1 2.41 5.82c0 4.55-3.7 8.24-8.25 8.24zm4.52-6.16c-.25-.12-1.47-.72-1.69-.81-.23-.08-.39-.12-.56.12-.17.25-.64.81-.79.97-.14.17-.29.19-.54.06-.25-.12-1.05-.39-1.99-1.23-.74-.66-1.23-1.47-1.38-1.72-.14-.25-.02-.38.11-.51.11-.11.25-.29.37-.43.12-.14.17-.25.25-.41.08-.17.04-.31-.02-.43-.06-.12-.56-1.34-.76-1.84-.2-.48-.4-.42-.56-.43h-.47c-.17 0-.43.06-.66.31-.22.25-.86.85-.86 2.07 0 1.22.89 2.4 1.01 2.56.12.17 1.75 2.67 4.23 3.74.59.26 1.05.41 1.41.52.59.19 1.13.16 1.56.1.48-.07 1.47-.6 1.68-1.18.21-.58.21-1.07.14-1.18-.06-.1-.22-.16-.47-.28z"/></svg>';
 const DIAS_INATIVO     = 30;   // sem vendas há mais de 30 dias = alerta de reativação
 
 const DOC_PATH = ['ls_parcerias','loja'];     // documento único compartilhado
@@ -344,6 +429,7 @@ const TEST_LOCAL = false;
 let auth,db,FB_OK=false,conta=null;
 let PARCEIROS=[];
 let filtroVend='__todas';
+let viewAtual='parceiros';
 let editando=null;
 
 /* ===== INIT FIREBASE ===== */
@@ -510,6 +596,9 @@ function entrar(c){
   $('appView').classList.add('on');
   // vendedora só vê as próprias parcerias
   if(c.papel==='vendedora'){filtroVend=c.nome;$('pVendRow').style.display='none';}
+  // Painel do gestor: só para gestor/operação
+  const pnP=$('pnav-painel'); if(pnP) pnP.style.display = (c.papel==='vendedora')?'none':'';
+  viewAtual='parceiros';
   montarSeg();
   ouvirNuvem();
   render();
@@ -569,6 +658,115 @@ function montarSeg(){
   });
 }
 
+/* ===== NAVEGAÇÃO ENTRE VIEWS ===== */
+function setView(v){
+  viewAtual=v;
+  document.querySelectorAll('.pnav-b').forEach(b=>b.classList.toggle('on', b.dataset.v===v));
+  $('view-parceiros').style.display = v==='parceiros'?'':'none';
+  $('view-ranking').style.display   = v==='ranking'?'':'none';
+  $('view-hist').style.display      = v==='hist'?'':'none';
+  $('view-painel').style.display    = v==='painel'?'':'none';
+  if(v==='ranking') renderRanking();
+  else if(v==='hist') renderHist();
+  else if(v==='painel') renderPainel();
+  else render();
+}
+
+/* ===== MARCOS — alerta rápido pra vendedora ===== */
+function renderMarcos(){
+  const box=$('marcos'); if(!box) return;
+  const ordem={sap:0,prem:1,perto:2,pertoP:3};
+  const itens=[];
+  visiveis().forEach(p=>{
+    const c=calc(p);
+    if(c.sapPend>0) itens.push({p,tipo:'sap',txt:`tem ${c.sapPend} sapato${c.sapPend>1?'s':''} grátis pra entregar 👞`});
+    else if(c.premPend>0) itens.push({p,tipo:'prem',txt:`tem ${c.premPend} prêmio${c.premPend>1?'s':''} extra pra entregar 🎁`});
+    else if(c.total>0 && c.faltam<=2 && c.faltam>0) itens.push({p,tipo:'perto',txt:`falta${c.faltam===1?'':'m'} só ${c.faltam} par${c.faltam>1?'es':''} pro próximo sapato grátis`});
+    else if(c.brindes>0 && c.premPend===0 && c.faltaPremio<=1 && c.faltaPremio>0) itens.push({p,tipo:'pertoP',txt:`falta só ${c.faltaPremio} sapato pro prêmio extra 🎁`});
+  });
+  itens.sort((a,b)=>ordem[a.tipo]-ordem[b.tipo]);
+  if(!itens.length){ box.style.display='none'; box.innerHTML=''; return; }
+  box.style.display='';
+  box.innerHTML = `<div class="marcos-h">⭐ Marcos — atenção rápida <span>(${itens.length})</span></div>`+
+    itens.slice(0,10).map(it=>{
+      const entregar = it.tipo==='sap'||it.tipo==='prem';
+      let acts;
+      if(entregar){
+        const fn = it.tipo==='prem' ? `entregaPremio('${it.p.id}',1)` : `entregaSapato('${it.p.id}',1)`;
+        acts = `<button class="marco-b wa" onclick="waBrinde('${it.p.id}')">${WA_ICON} Avisar Parceiro</button>`+
+               `<button class="marco-b ok" onclick="${fn}">✓ Resolvido</button>`;
+      } else {
+        acts = `<button class="marco-b wa" onclick="waProgresso('${it.p.id}')">${WA_ICON} Avisar Parceiro</button>`;
+      }
+      return `<div class="marco ${entregar?'entregar':'perto'}">
+        <div class="marco-info"><b>${esc(it.p.nome)}</b><small>${it.txt}</small></div>
+        <div class="marco-acts">${acts}</div>
+      </div>`;
+    }).join('');
+}
+
+/* ===== RANKING + NÍVEIS ===== */
+function renderRanking(){
+  const box=$('view-ranking'); if(!box) return;
+  const arr=visiveis().slice().sort((a,b)=>{const ca=calc(a),cb=calc(b);return (cb.total-ca.total)||(cb.brindes-ca.brindes);});
+  if(!arr.length){ box.innerHTML='<div class="empty"><h3>Sem parceiros no ranking</h3></div>'; return; }
+  const medal=i=>i===0?'🥇':i===1?'🥈':i===2?'🥉':`${i+1}º`;
+  box.innerHTML = `<div class="rk-legend">Níveis por total de pares: 🥉 Bronze (1+) · 🥈 Prata (20+) · 🥇 Ouro (50+)</div>`+
+    arr.map((p,i)=>{
+      const c=calc(p), niv=nivelDe(c.total);
+      return `<div class="rk-row${i<3?' top':''}">
+        <div class="rk-pos">${medal(i)}</div>
+        <div class="rk-id"><b>${esc(p.nome)}</b><small>${esc(p.vendedora||'—')} · ${c.brindes} sapato${c.brindes!==1?'s':''} ganho${c.brindes!==1?'s':''}${c.dias!=null?` · última há ${c.dias}d`:' · sem vendas'}</small></div>
+        <div class="rk-niv" style="color:${niv.cor}">${niv.emoji} ${niv.nome}</div>
+        <div class="rk-tot"><b>${c.total}</b><span>pares</span></div>
+      </div>`;
+    }).join('');
+}
+
+/* ===== HISTÓRICO DE ENTREGAS ===== */
+function renderHist(){
+  const box=$('view-hist'); if(!box) return;
+  const logs=[];
+  visiveis().forEach(p=>(p.entregasLog||[]).forEach(l=>logs.push(Object.assign({},l,{nome:p.nome,vend:p.vendedora}))));
+  logs.sort((a,b)=>(b.ts||0)-(a.ts||0));
+  if(!logs.length){ box.innerHTML='<div class="empty"><h3>Nenhuma entrega registrada ainda</h3><p>Quando você marcar um sapato grátis ou prêmio extra como entregue, ele aparece aqui com a data.</p></div>'; return; }
+  box.innerHTML = `<div class="hist-h">📜 Sapatos e prêmios entregues <span>(${logs.length})</span></div>`+
+    logs.map(l=>`<div class="hist-row">
+      <div class="hist-ic">${l.tipo==='premio'?'🎁':'👞'}</div>
+      <div class="hist-id"><b>${esc(l.nome)}</b><small>${l.tipo==='premio'?'Prêmio extra':'Sapato grátis'}${l.por?` · por ${esc(l.por)}`:''}${l.vend?` · ${esc(l.vend)}`:''}</small></div>
+      <div class="hist-data">${fmtData(l.data)}</div>
+    </div>`).join('');
+}
+
+/* ===== PAINEL DO GESTOR ===== */
+function renderPainel(){
+  const box=$('view-painel'); if(!box) return;
+  const arr=PARCEIROS.slice();
+  const mes=hojeISO().slice(0,7);
+  let totGeral=0,totMes=0,sapPend=0,premPend=0,sapEntr=0,premEntr=0,ativos=0,inativos=0;
+  const porVend={};
+  arr.forEach(p=>{
+    const c=calc(p);
+    totGeral+=c.total; sapPend+=c.sapPend; premPend+=c.premPend; sapEntr+=c.sapEntregues; premEntr+=c.premEntregues;
+    (p.vendas||[]).forEach(v=>{ if((v.data||'').slice(0,7)===mes) totMes+=Number(v.pares)||0; });
+    if(c.dias!=null && c.dias<=DIAS_INATIVO) ativos++; else if(c.dias!=null) inativos++;
+    const vd=p.vendedora||'—'; porVend[vd]=(porVend[vd]||0)+c.total;
+  });
+  const vendRows=Object.entries(porVend).sort((a,b)=>b[1]-a[1])
+    .map(([v,t])=>`<div class="pn-vrow"><span>${esc(v)}</span><b>${t} pares</b></div>`).join('');
+  box.innerHTML=`
+    <div class="pn-kpis">
+      <div class="pn-k"><div class="pn-l">Pares no mês</div><div class="pn-v">${totMes}</div></div>
+      <div class="pn-k"><div class="pn-l">Pares no total</div><div class="pn-v">${totGeral}</div></div>
+      <div class="pn-k${sapPend?' alert':''}"><div class="pn-l">Sapatos a entregar</div><div class="pn-v">${sapPend}</div><div class="pn-s">passivo da loja</div></div>
+      <div class="pn-k${premPend?' alert':''}"><div class="pn-l">Prêmios a entregar</div><div class="pn-v">${premPend}</div><div class="pn-s">passivo da loja</div></div>
+      <div class="pn-k"><div class="pn-l">Parceiros ativos</div><div class="pn-v">${ativos}</div><div class="pn-s">${inativos} inativos (+${DIAS_INATIVO}d)</div></div>
+      <div class="pn-k"><div class="pn-l">Já entregue</div><div class="pn-v">${sapEntr}<span style="font-size:13px;opacity:.7"> sapatos</span></div><div class="pn-s">${premEntr} prêmios extras</div></div>
+    </div>
+    <div class="pn-sec">Pares por vendedora (total)</div>
+    <div class="pn-vlist">${vendRows||'<div class="muted">Sem dados</div>'}</div>`;
+}
+
 /* ===== RENDER ===== */
 function visiveis(){
   let arr=PARCEIROS.slice();
@@ -605,6 +803,11 @@ function render(){
     <div class="kpi"><div class="kl">Sapatos a entregar</div><div class="kv" style="color:${sapAEntregar?'var(--amber)':'var(--gold)'}">${sapAEntregar}</div><div class="ks">${premAEntregar} prêmios extras pendentes</div></div>
     <div class="kpi"><div class="kl">Para reativar</div><div class="kv" style="color:${inativos?'var(--amber)':'var(--gold)'}">${inativos}</div><div class="ks">sem vendas há +${DIAS_INATIVO} dias</div></div>`;
 
+  renderMarcos();
+  if(viewAtual==='ranking') renderRanking();
+  else if(viewAtual==='hist') renderHist();
+  else if(viewAtual==='painel') renderPainel();
+
   const grid=$('grid');const arr=visiveis();
   if(!arr.length){
     grid.innerHTML=`<div class="empty" style="grid-column:1/-1"><h3>Nenhum parceiro por aqui</h3><p>Cadastre a primeira loja parceira no botão <b>Novo parceiro</b> e comece a registrar as vendas.</p></div>`;
@@ -624,6 +827,7 @@ function render(){
 
 function card(p){
   const c=calc(p);
+  const niv=nivelDe(c.total);
   const inativo=c.dias!==null&&c.dias>DIAS_INATIVO;
   const ganhouAgora=c.total>0&&c.noCiclo===0;
   const temPremioPend=c.premPend>0;
@@ -636,6 +840,7 @@ function card(p){
       </div>
       <div class="vend-tags">
         <button class="fav-btn${p.favorito?' on':''}" data-fav="${p.id}" title="${p.favorito?'Desafixar':'Favoritar'}">${p.favorito?'★':'☆'}</button>
+        <span class="nivel-badge" style="border-color:${niv.cor};color:${niv.cor}" title="${c.total} pares no total">${niv.emoji} ${niv.nome}</span>
         <span class="vend-tag">${esc(p.vendedora||'—')}</span>
         ${compartilhadaAtiva(p)?`<span class="vend-tag share" title="Compartilhado para férias${p.compartilhadaAte?' até '+fmtData(p.compartilhadaAte):''}">⇄ ${esc(compartilhadaAtiva(p))}</span>`:''}
       </div>
@@ -682,10 +887,10 @@ function card(p){
         <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> Registrar venda
       </button>
       <button class="act wa" data-wa="${p.id}">
-        <svg viewBox="0 0 24 24"><path d="M21 11.5a8.5 8.5 0 0 1-12.5 7.5L3 21l2-5A8.5 8.5 0 1 1 21 11.5z"/></svg> Avisar progresso
+        ${WA_ICON} Avisar progresso
       </button>
-      <button class="act" data-rea="${p.id}">
-        <svg viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 4v4h4"/></svg> Reativar
+      <button class="act wa" data-rea="${p.id}">
+        ${WA_ICON} Reativar Parceiro
       </button>
       <button class="act" data-edit="${p.id}">
         <svg viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg> Editar
@@ -699,19 +904,38 @@ function esc(s){return (s||'').replace(/[&<>"]/g,m=>({'&':'&amp;','<':'&lt;','>'
 function entregaSapato(id,delta){
   const p=PARCEIROS.find(x=>x.id===id);if(!p)return;
   const c=calc(p);
-  p.sapatosEntregues=Math.min(Math.max((p.sapatosEntregues||0)+delta,0),c.brindes);
+  const novo=Math.min(Math.max((p.sapatosEntregues||0)+delta,0),c.brindes);
+  if(novo===(p.sapatosEntregues||0)){toast('Nada a alterar');return;}
+  p.entregasLog=p.entregasLog||[];
+  if(delta>0) p.entregasLog.push({tipo:'sapato',data:hojeISO(),ts:Date.now(),por:conta?conta.nome:''});
+  else { for(let i=p.entregasLog.length-1;i>=0;i--){ if(p.entregasLog[i].tipo==='sapato'){p.entregasLog.splice(i,1);break;} } }
+  p.sapatosEntregues=novo;
   salvarNuvem();render();
-  toast(delta>0?'Sapato marcado como entregue':'Entrega desfeita');
+  toast(delta>0?'Sapato grátis registrado como entregue':'Entrega desfeita');
 }
 function entregaPremio(id,delta){
   const p=PARCEIROS.find(x=>x.id===id);if(!p)return;
   const c=calc(p);
-  p.premiosEntregues=Math.min(Math.max((p.premiosEntregues||0)+delta,0),c.premios);
+  const novo=Math.min(Math.max((p.premiosEntregues||0)+delta,0),c.premios);
+  if(novo===(p.premiosEntregues||0)){toast('Nada a alterar');return;}
+  p.entregasLog=p.entregasLog||[];
+  if(delta>0) p.entregasLog.push({tipo:'premio',data:hojeISO(),ts:Date.now(),por:conta?conta.nome:''});
+  else { for(let i=p.entregasLog.length-1;i>=0;i--){ if(p.entregasLog[i].tipo==='premio'){p.entregasLog.splice(i,1);break;} } }
+  p.premiosEntregues=novo;
   salvarNuvem();render();
-  toast(delta>0?'Prêmio extra marcado como entregue':'Entrega desfeita');
+  toast(delta>0?'Prêmio extra registrado como entregue':'Entrega desfeita');
 }
 
 /* ===== WHATSAPP ===== */
+function waBrinde(id){
+  const p=PARCEIROS.find(x=>x.id===id);if(!p)return;
+  const c=calc(p);
+  const oi=p.responsavel?`Olá, ${p.responsavel.split(' ')[0]}!`:'Olá!';
+  const qtd=c.sapPend>0?c.sapPend:c.premPend;
+  const oque=c.sapPend>0?`${qtd} ${qtd>1?'pares grátis':'par grátis'}`:`${qtd} ${qtd>1?'prêmios extras':'prêmio extra'}`;
+  const msg=`${oi} 🦁 Boa notícia da sua parceria com a Loretto Scarpa: você já tem *${oque}* liberado${qtd>1?'s':''} pra retirar! Quando puder, é só combinar a retirada com a gente. 👞`;
+  window.open(`https://wa.me/${telLimpo(p.telefone)}?text=${encodeURIComponent(msg)}`,'_blank');
+}
 function waProgresso(id){
   const p=PARCEIROS.find(x=>x.id===id);if(!p)return;
   const c=calc(p);
