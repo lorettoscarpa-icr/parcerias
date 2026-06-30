@@ -282,7 +282,7 @@
     <div class="erro" id="erro"></div>
     <button class="btn" id="btnLogin">Entrar</button>
     <div class="avisoFB" id="avisoFB">⚠ Falha ao conectar ao banco. Verifique a conexão.</div>
-    <div class="foot">Parcerias · 10 pares = 1 brinde</div>
+    <div class="foot">Parcerias · meta por parceiro (padrão 10 pares = 1 brinde)</div>
   </div>
 </div>
 
@@ -337,6 +337,20 @@
     <div class="field"><label class="lbl">Nome da loja parceira *</label><input id="pNome" type="text" placeholder="Ex: Trajes & Cia"></div>
     <div class="field"><label class="lbl">Responsável na loja</label><input id="pResp" type="text" placeholder="Ex: Carlos"></div>
     <div class="field"><label class="lbl">WhatsApp (com DDD) *</label><input id="pTel" type="tel" placeholder="Ex: 62 99999-9999"></div>
+    <div class="field" style="border-top:1px solid var(--linha-fraca);padding-top:14px">
+      <label class="lbl">Regra de recompensa deste parceiro</label>
+      <div style="display:flex;gap:10px">
+        <div style="flex:1">
+          <label class="lbl" style="font-size:9px">A cada quantos pares</label>
+          <input id="pMetaPares" type="number" min="1" value="10">
+        </div>
+        <div style="flex:1">
+          <label class="lbl" style="font-size:9px">Ganha quantos sapatos</label>
+          <input id="pBrindeCiclo" type="number" min="1" value="1">
+        </div>
+      </div>
+      <div class="hint">Ex.: 30 pares = 3 sapatos. Padrão da casa é 10 pares = 1 sapato.</div>
+    </div>
     <div class="field" id="pVendRow"><label class="lbl">Vendedora responsável (dona)</label><select id="pVend"></select></div>
     <div class="field" id="pShareRow">
       <label class="lbl">Compartilhar temporariamente (férias)</label>
@@ -542,13 +556,21 @@ function toggleFav(id){
 }
 
 /* cálculos do parceiro */
+function metaDe(p){
+  // meta configurável por parceiro (default = regra padrão 10 pares = 1 sapato)
+  const mp=Math.max(1,Number(p&&p.metaPares)||PARES_POR_BRINDE);
+  const bp=Math.max(1,Number(p&&p.brindePorCiclo)||1);
+  return {metaPares:mp,brindePorCiclo:bp};
+}
 function calc(p){
   const vendas=p.vendas||[];
+  const {metaPares,brindePorCiclo}=metaDe(p);
   const total=vendas.reduce((s,v)=>s+(Number(v.pares)||0),0);
-  const brindes=Math.floor(total/PARES_POR_BRINDE);             // sapatos grátis ganhos
-  const noCiclo=total%PARES_POR_BRINDE;
-  const faltam=noCiclo===0?(total>0?PARES_POR_BRINDE:PARES_POR_BRINDE):PARES_POR_BRINDE-noCiclo;
-  const pct=Math.round((noCiclo/PARES_POR_BRINDE)*100);
+  const ciclos=Math.floor(total/metaPares);
+  const brindes=ciclos*brindePorCiclo;                          // sapatos grátis ganhos
+  const noCiclo=total%metaPares;
+  const faltam=metaPares-noCiclo===0?metaPares:metaPares-noCiclo;
+  const pct=Math.round((noCiclo/metaPares)*100);
   const ultima=vendas.length?vendas.map(v=>v.data).sort().slice(-1)[0]:null;
   // entregas (registradas manualmente, limitadas ao ganho)
   const sapEntregues=Math.min(Math.max(p.sapatosEntregues||0,0),brindes);
@@ -559,7 +581,8 @@ function calc(p){
   const premPend=premios-premEntregues;
   const faltaPremio=premios*SAPATOS_POR_PREMIO+SAPATOS_POR_PREMIO-brindes; // sapatos até o próximo prêmio
   return {total,brindes,noCiclo,faltam,pct,ultima,dias:diasDesde(ultima),
-          sapEntregues,sapPend,premios,premEntregues,premPend,faltaPremio};
+          sapEntregues,sapPend,premios,premEntregues,premPend,faltaPremio,
+          metaPares,brindePorCiclo};
 }
 
 /* ===== PERSISTÊNCIA ===== */
@@ -853,7 +876,7 @@ function card(p){
         ? `<div class="gain">🎉 Fechou um ciclo — ${c.faltam} pares até o próximo sapato</div>`
         : `<div class="pmeta"><span class="muted">Progresso do ciclo</span><span class="falta">faltam ${c.faltam} ${c.faltam===1?'par':'pares'}</span></div>`}
       <div class="pbar"><i style="width:${c.pct}%"></i></div>
-      <div class="pmeta"><span class="muted">${c.noCiclo}/${PARES_POR_BRINDE} no ciclo atual</span><span class="muted">${fmtData(c.ultima)}</span></div>
+      <div class="pmeta"><span class="muted">${c.noCiclo}/${c.metaPares} no ciclo atual${c.brindePorCiclo>1?` · ganha ${c.brindePorCiclo}`:''}</span><span class="muted">${fmtData(c.ultima)}</span></div>
     </div>
 
     <div class="stats-row">
@@ -978,6 +1001,8 @@ function abrirParceiro(id){
   $('pNome').value=p.nome||'';
   $('pResp').value=p.responsavel||'';
   $('pTel').value=p.telefone||'';
+  $('pMetaPares').value=p.metaPares||PARES_POR_BRINDE;
+  $('pBrindeCiclo').value=p.brindePorCiclo||1;
   document.querySelector('#scrimParceiro h2').innerHTML=novo?'Novo <em>parceiro</em>':'Editar <em>parceiro</em>';
   if(conta.papel==='vendedora'){$('pVendRow').style.display='none';$('pShareRow').style.display='none';}
   else{
@@ -1020,14 +1045,17 @@ $('btnSalvarParceiro').onclick=()=>{
   const share=conta.papel==='vendedora'?'':($('pShare').value||'');
   const shareAte=share?($('pShareAte').value||''):'';
   const id=$('pEditId').value;
+  const metaPares=Math.max(1,parseInt($('pMetaPares').value,10)||PARES_POR_BRINDE);
+  const brindePorCiclo=Math.max(1,parseInt($('pBrindeCiclo').value,10)||1);
   if(id){
     const p=PARCEIROS.find(x=>x.id===id);
     if(p){p.nome=nome;p.responsavel=$('pResp').value.trim();p.telefone=tel;p.vendedora=vend;
+      p.metaPares=metaPares;p.brindePorCiclo=brindePorCiclo;
       p.compartilhadaCom=share;p.compartilhadaAte=shareAte;
       if($('pBrindesBox').style.display!=='none'){p.sapatosEntregues=pEdB.sap;p.premiosEntregues=pEdB.prem;}}
     toast('Parceiro atualizado');
   }else{
-    PARCEIROS.push({id:uid(),nome,responsavel:$('pResp').value.trim(),telefone:tel,vendedora:vend,compartilhadaCom:share,compartilhadaAte:shareAte,criadoEm:Date.now(),criadoPor:conta.nome,vendas:[]});
+    PARCEIROS.push({id:uid(),nome,responsavel:$('pResp').value.trim(),telefone:tel,vendedora:vend,metaPares,brindePorCiclo,compartilhadaCom:share,compartilhadaAte:shareAte,criadoEm:Date.now(),criadoPor:conta.nome,vendas:[]});
     toast('Parceiro cadastrado');
   }
   salvarNuvem();render();
